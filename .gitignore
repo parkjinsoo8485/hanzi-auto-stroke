@@ -1,0 +1,12 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+
+# Manim temp and cache
+media/
+__pycache__/
+*.pyc
+
+# Temp video captures / raw files
+ref_video.mp4.webm
