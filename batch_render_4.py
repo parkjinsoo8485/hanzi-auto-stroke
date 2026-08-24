@@ -18,7 +18,7 @@ for i, c in enumerate(chars, 1):
     print(f"\n==========================================")
     print(f"[{i}/{len(chars)}] ▶ 「{c}」 숏폼 생성 중...")
     print(f"==========================================")
-    ok = run_pipeline(char=c, quality="l")
+    ok = run_pipeline(char=c, quality="m")
     if ok:
         print(f"✅ 「{c}」 완료!")
     else:
