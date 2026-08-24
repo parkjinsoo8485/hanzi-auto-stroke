@@ -14,18 +14,33 @@ if sys.platform == "win32":
     except Exception:
         pass
 
+import re
 from hanzi_data import HANZI_DATABASE
-from tts_generator import prepare_hanzi_audios
+from tts_generator import prepare_hanzi_audios, get_ffmpeg_exe
 from animcjk_loader import parse_animcjk_strokes
 from generate_sfx import generate_brush_stroke_sfx
+from bgm_generator import generate_traditional_hanzi_bgm
+
+def get_audio_duration(file_path: str) -> float:
+    """FFmpeg를 통해 오디오 파일의 정확한 재생 길이(초) 추출"""
+    try:
+        ffmpeg_exe = get_ffmpeg_exe()
+        res = subprocess.run([ffmpeg_exe, "-i", file_path], capture_output=True, text=True, errors="replace")
+        m = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", res.stderr)
+        if m:
+            h, m_, s = m.groups()
+            return int(h) * 3600 + int(m_) * 60 + float(s)
+    except Exception:
+        pass
+    return 3.5
 
 def run_pipeline(char="大", quality="m", preview=False):
     """
     1. AnimCJK 정통 붓글씨 획순 SVG 파싱
     2. 한국어 + 미국 원어민 영어 듀얼 TTS 및 획별 가이드 음성 생성
-    3. 서예 붓글씨 마찰 SFX 생성
+    3. 서예 붓글씨 마찰 SFX 및 동양풍 전통 앰비언트 BGM 생성
     4. Manim 실사 손+붓 9:16 비디오 렌더링
-    5. FFmpeg 멀티트랙 오디오 & SFX 믹싱
+    5. FFmpeg 멀티트랙 오디오, SFX, BGM 완벽 믹싱 (음성 겹침 방지)
     """
     if char not in HANZI_DATABASE:
         print(f"[Error] 지원되지 않는 한자입니다: {char}")
@@ -41,18 +56,25 @@ def run_pipeline(char="大", quality="m", preview=False):
     animcjk_data = parse_animcjk_strokes(char)
     print(f"-> 획순 준비 완료: 총 {len(animcjk_data['strokes'])}개 획")
 
-    # 2. TTS 음성 및 SFX 준비
-    print("\n[Step 2] 한국어/원어민 영어 듀얼, 획별 가이드 TTS & 붓 SFX 생성 중...")
+    # 2. TTS 음성 및 SFX, BGM 준비
+    print("\n[Step 2] 한국어/원어민 영어 듀얼, 획별 가이드 TTS & 붓 SFX & 동양풍 BGM 생성 중...")
     audio_paths = prepare_hanzi_audios(HANZI_DATABASE[char])
     sfx_path = generate_brush_stroke_sfx("assets/audio/brush_stroke.wav", duration=1.5)
-    print(f"-> 오디오 & SFX 준비 완료: {audio_paths}")
+    bgm_path = generate_traditional_hanzi_bgm("assets/audio/hanzi_study_bgm.wav", duration=35.0)
+    print(f"-> 오디오 & SFX, BGM 준비 완료!")
 
     # 3. Manim 렌더링
     print(f"\n[Step 3] Manim 9:16 비디오 렌더링 중 (품질: {quality})...")
     quality_flag = f"-q{quality}"
     scene_file = os.path.join(os.path.dirname(__file__), "short_scene.py")
     
-    python_exe = sys.executable
+    # 가상환경 python 또는 현재 인터프리터 감지
+    venv_python = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".venv", "Scripts", "python.exe"))
+    if os.path.exists(venv_python):
+        python_exe = venv_python
+    else:
+        python_exe = sys.executable
+
     manim_cmd = [
         python_exe, "-m", "manim",
         scene_file, "HanziShortScene",
@@ -86,8 +108,8 @@ def run_pipeline(char="大", quality="m", preview=False):
     
     print(f"-> 기본 비디오 경로: {rendered_mp4}")
 
-    # 5. FFmpeg를 통한 멀티트랙 오디오 & SFX 믹싱
-    print("\n[Step 4] 실사 서예 사운드 & 가이드 음성 멀티트랙 믹싱 및 최종 Shorts 완성...")
+    # 5. FFmpeg를 통한 멀티트랙 오디오 & SFX, BGM 믹싱
+    print("\n[Step 4] 동양풍 BGM & 실사 서예 사운드 & 가이드 음성 멀티트랙 믹싱 및 최종 Shorts 완성...")
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
     final_output = os.path.join(output_dir, f"shorts_{char}_{HANZI_DATABASE[char]['hun_eum'].replace(' ', '_')}.mp4")
@@ -113,32 +135,40 @@ def run_pipeline(char="大", quality="m", preview=False):
         mix_inputs.append(f"[a_s{s_idx}]")
         input_idx += 1
 
-        # 붓글씨 마찰 SFX
+        # 붓글씨 마찰 SFX (소프트 0.65배)
         inputs.extend(["-i", sfx_path.replace("\\", "/")])
         sfx_delay = delay_ms + 200
-        filter_parts.append(f"[{input_idx}:a]adelay={sfx_delay}|{sfx_delay},volume=0.85[a_sfx{s_idx}]")
+        filter_parts.append(f"[{input_idx}:a]adelay={sfx_delay}|{sfx_delay},volume=0.65[a_sfx{s_idx}]")
         mix_inputs.append(f"[a_sfx{s_idx}]")
         input_idx += 1
 
     # 훈음 오디오 (획 작성 종료 후)
     huneum_time = stroke_start_time + len(audio_paths["strokes"]) * stroke_interval + 400
+    huneum_dur_ms = int(get_audio_duration(audio_paths["huneum"]) * 1000)
     inputs.extend(["-i", audio_paths["huneum"].replace("\\", "/")])
-    filter_parts.append(f"[{input_idx}:a]adelay={huneum_time}|{huneum_time},volume=1.3[a_huneum]")
+    filter_parts.append(f"[{input_idx}:a]adelay={huneum_time}|{huneum_time},volume=1.4[a_huneum]")
     mix_inputs.append("[a_huneum]")
     input_idx += 1
 
-    # 단어 오디오
-    word_time = huneum_time + 2600
+    # 실생활 단어 오디오 (훈음 오디오 재생이 완전히 끝난 후 + 600ms 여유 버퍼 -> 겹침 원천 방지)
+    word_time = huneum_time + huneum_dur_ms + 600
     inputs.extend(["-i", audio_paths["example_word"].replace("\\", "/")])
-    filter_parts.append(f"[{input_idx}:a]adelay={word_time}|{word_time},volume=1.3[a_word]")
+    filter_parts.append(f"[{input_idx}:a]adelay={word_time}|{word_time},volume=1.4[a_word]")
     mix_inputs.append("[a_word]")
+    input_idx += 1
+
+    # 동양풍 한자 서예 훅 BGM 추가 (볼륨 0.22로 인트로 비트와 가야금 훅 멜로디의 생동감 부여)
+    inputs.extend(["-i", bgm_path.replace("\\", "/")])
+    filter_parts.append(f"[{input_idx}:a]volume=0.22[a_bgm]")
+    mix_inputs.append("[a_bgm]")
+    input_idx += 1
     total_audio_tracks = len(mix_inputs)
 
     # amix 필터 결합
     filter_str = ";".join(filter_parts) + f";{''.join(mix_inputs)}amix=inputs={total_audio_tracks}:dropout_transition=2[aout]"
 
     ffmpeg_cmd = [
-        "ffmpeg", "-y"
+        get_ffmpeg_exe(), "-y"
     ] + inputs + [
         "-filter_complex", filter_str,
         "-map", "0:v",
@@ -150,9 +180,13 @@ def run_pipeline(char="大", quality="m", preview=False):
     ]
 
     print(f"실행 명령: {' '.join(ffmpeg_cmd)}")
-    ff_res = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
-    if ff_res.returncode != 0:
-        print(f"[Warning] 오디오 믹싱 중 에러 발생:\n{ff_res.stderr}")
+    try:
+        ff_res = subprocess.run(ffmpeg_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+        if ff_res.returncode != 0:
+            print(f"[Warning] 오디오 믹싱 중 에러 발생:\n{ff_res.stderr}")
+            shutil.copy(rendered_mp4, final_output)
+    except Exception as e:
+        print(f"[Warning] FFmpeg 실행 불가, 원본 비디오 복사: {e}")
         shutil.copy(rendered_mp4, final_output)
     
     print(f"\n🎉 [성공] 참고 영상 스타일 실사 서예 숏폼 영상이 성공적으로 제작되었습니다!")

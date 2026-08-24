@@ -10,6 +10,7 @@ import re
 import asyncio
 import edge_tts
 import subprocess
+import shutil
 
 if sys.platform == "win32":
     try:
@@ -18,17 +19,59 @@ if sys.platform == "win32":
     except Exception:
         pass
 
+def get_ffmpeg_exe():
+    try:
+        import imageio_ffmpeg
+        fpath = imageio_ffmpeg.get_ffmpeg_exe()
+        if fpath and os.path.exists(fpath):
+            return fpath
+    except Exception:
+        pass
+    exe = shutil.which("ffmpeg")
+    if exe and os.path.exists(exe):
+        return exe
+    try:
+        from manim import config
+        if config.ffmpeg_executable and os.path.exists(config.ffmpeg_executable):
+            return config.ffmpeg_executable
+    except Exception:
+        pass
+    for path in [
+        r"C:\ffmpeg\bin\ffmpeg.exe",
+        r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
+        os.path.expanduser(r"~\scoop\apps\ffmpeg\current\bin\ffmpeg.exe"),
+        os.path.expanduser(r"~\AppData\Local\Microsoft\WinGet\Links\ffmpeg.exe")
+    ]:
+        if os.path.exists(path):
+            return path
+    return "ffmpeg"
+
 # 한국어 성우 (밝고 또렷한 톤)
 VOICE_KO = "ko-KR-SunHiNeural"
 # 미국 원어민 고급 성우 (자연스럽고 세련된 프리미엄 내레이션)
 VOICE_EN = "en-US-AriaNeural"
 
-def clean_spoken_text(text: str) -> str:
-    """TTS 음성 낭독 시 슬래시(/)나 불필요한 기호를 자연스러운 쉼표로 변환"""
+def clean_hook_text(text: str) -> str:
+    """처음 한자 의미 설명(훅) 낭독 시에만 괄호 () 안의 한글을 생략하고 자연스러운 쉼표 띄어 읽기 적용"""
     if not text:
         return ""
-    # 슬래시 및 괄호 처리
-    text = text.replace("/", ", ").replace("  ", " ").strip()
+    # 괄호 및 괄호 안의 텍스트 생략 (예: (태양) -> 생략)
+    text = re.sub(r'\([^)]*\)', '', text)
+    # 슬래시 치환
+    text = text.replace("/", ", ")
+    # 접속 조사(와, 과, 및) 뒤에 쉼표가 없으면 자연스러운 호흡(띄어 읽기)을 위해 쉼표 추가
+    text = re.sub(r'([가-힣]+(?:와|과|및))\s+(?![,\.!])', r'\1, ', text)
+    # 중복 쉼표 및 다중 공백 정리
+    text = re.sub(r',\s*,+', ', ', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+def clean_spoken_text(text: str) -> str:
+    """일반 TTS 음성 낭독 시 슬래시(/) 치환 및 공백 정리 (괄호 임의 삭제 방지)"""
+    if not text:
+        return ""
+    text = text.replace("/", ", ")
+    text = re.sub(r'\s+', ' ', text).strip()
     return text
 
 async def generate_speech_async(text: str, output_path: str, voice: str = VOICE_KO, rate: str = "+0%", pitch: str = "+0Hz", volume: str = "+25%"):
@@ -49,9 +92,10 @@ def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
     char_audio_dir = os.path.join(base_dir, f"char_{char}")
     os.makedirs(char_audio_dir, exist_ok=True)
 
-    # 1. 훅 오디오 (한국어) - 시작 부분 귀에 쏙 들어오도록 크고 또렷하게
+    # 1. 훅 오디오 (처음 한자 의미 설명: 괄호 안 한글 생략 및 자연스러운 띄어 읽기 적용)
     hook_path = os.path.join(char_audio_dir, "hook.mp3")
-    generate_speech(f"{hanzi_info['sound_desc']}!", hook_path, voice=VOICE_KO, rate="+10%", pitch="+2Hz", volume="+35%")
+    spoken_hook = clean_hook_text(hanzi_info['sound_desc'])
+    generate_speech(f"{spoken_hook}!", hook_path, voice=VOICE_KO, rate="+6%", pitch="+2Hz", volume="+35%")
 
     # 2. 획별 획순 가이드 음성 생성 (한자 데이터베이스의 정확한 획 명칭 적용)
     stroke_names_list = hanzi_info.get("stroke_names", [])
@@ -64,40 +108,53 @@ def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
             s_text = f"{order}번째 획!"
             
         s_path = os.path.join(char_audio_dir, f"stroke_{order}_guide.mp3")
-        generate_speech(s_text, s_path, voice=VOICE_KO, rate="+15%", pitch="+3Hz", volume="+25%")
+        generate_speech(s_text, s_path, voice=VOICE_KO, rate="+12%", pitch="+3Hz", volume="+25%")
         stroke_audios.append(s_path)
 
-    # 3. 훈음 파트: [한국어] "큰 대!" + [미국 원어민] "Big, Great."
+    # 3. 훈음 파트: [한국어] "날, 일!" + [미국 원어민] "Day, Sun."
     huneum_ko_path = os.path.join(char_audio_dir, "huneum_ko.mp3")
     huneum_en_path = os.path.join(char_audio_dir, "huneum_en.mp3")
     combined_huneum_path = os.path.join(char_audio_dir, "huneum_combined.mp3")
 
-    generate_speech(f"{hanzi_info['hun_eum']}!", huneum_ko_path, voice=VOICE_KO, rate="+5%", pitch="+2Hz", volume="+30%")
-    # 슬래시 제거된 영문 훈음
+    hun_eum_raw = hanzi_info['hun_eum']
+    if " " in hun_eum_raw:
+        hun_part, eum_part = hun_eum_raw.rsplit(" ", 1)
+        spoken_hun_eum = f"{hun_part}, {eum_part}!"
+    else:
+        spoken_hun_eum = f"{hun_eum_raw}!"
+
+    generate_speech(spoken_hun_eum, huneum_ko_path, voice=VOICE_KO, rate="+4%", pitch="+2Hz", volume="+30%")
+    # 영문 훈음
     clean_en_huneum = clean_spoken_text(hanzi_info['hun_eum_en'])
     generate_speech(f"{clean_en_huneum}.", huneum_en_path, voice=VOICE_EN, rate="+0%", volume="+25%")
 
     # 한국어 + 영어 순차 연결
-    concat_cmd_1 = [
-        "ffmpeg", "-y",
-        "-i", huneum_ko_path,
-        "-i", huneum_en_path,
-        "-filter_complex", "[0:0][1:0]concat=n=2:v=0:a=1[out]",
-        "-map", "[out]",
-        combined_huneum_path
-    ]
-    subprocess.run(concat_cmd_1, capture_output=True)
+    ffmpeg_bin = get_ffmpeg_exe()
+    try:
+        concat_cmd_1 = [
+            ffmpeg_bin, "-y",
+            "-i", huneum_ko_path,
+            "-i", huneum_en_path,
+            "-filter_complex", "[0:0][1:0]concat=n=2:v=0:a=1[out]",
+            "-map", "[out]",
+            combined_huneum_path
+        ]
+        subprocess.run(concat_cmd_1, capture_output=True)
+    except Exception as e:
+        print(f"[Warning] 훈음 오디오 결합 실패: {e}")
 
     # 4. 단어 파트: [한국어] "대인! 마음이 넓고 훌륭한 사람." + [미국 원어민] "Adult, Great person."
     word_ko_path = os.path.join(char_audio_dir, "word_ko.mp3")
     word_en_path = os.path.join(char_audio_dir, "word_en.mp3")
     combined_word_path = os.path.join(char_audio_dir, "word_combined.mp3")
 
+    # 한국어 단어 (예: "大人 (대인)" -> "대인")
     clean_word_ko = hanzi_info['example_word'].split('(')[-1].replace(')', '').strip()
+    # 한국어 설명 (예: "태양의 날, 한 주의 첫날 (Sunday)" -> "태양의 날, 한 주의 첫날")
     ko_desc = hanzi_info['example_word_desc'].split('(')[0].strip()
     generate_speech(f"{clean_word_ko}! {ko_desc}.", word_ko_path, voice=VOICE_KO, rate="+5%", volume="+25%")
     
-    # 괄호 안의 영어 텍스트만 깔끔하게 추출하여 슬래시 제거 후 낭독
+    # 괄호 안의 영어 텍스트 추출 (예: "(Sunday)" -> "Sunday")
     en_desc = hanzi_info['example_word_desc']
     if '(' in en_desc and ')' in en_desc:
         raw_en_word = en_desc.split('(')[-1].replace(')', '').strip()
@@ -107,15 +164,18 @@ def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
     clean_en_word = clean_spoken_text(raw_en_word)
     generate_speech(f"{clean_en_word}.", word_en_path, voice=VOICE_EN, rate="+0%", volume="+25%")
 
-    concat_cmd_2 = [
-        "ffmpeg", "-y",
-        "-i", word_ko_path,
-        "-i", word_en_path,
-        "-filter_complex", "[0:0][1:0]concat=n=2:v=0:a=1[out]",
-        "-map", "[out]",
-        combined_word_path
-    ]
-    subprocess.run(concat_cmd_2, capture_output=True)
+    try:
+        concat_cmd_2 = [
+            ffmpeg_bin, "-y",
+            "-i", word_ko_path,
+            "-i", word_en_path,
+            "-filter_complex", "[0:0][1:0]concat=n=2:v=0:a=1[out]",
+            "-map", "[out]",
+            combined_word_path
+        ]
+        subprocess.run(concat_cmd_2, capture_output=True)
+    except Exception as e:
+        print(f"[Warning] 단어 오디오 결합 실패: {e}")
 
     return {
         "hook": hook_path,

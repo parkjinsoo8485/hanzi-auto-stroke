@@ -10,6 +10,7 @@ import sys
 import re
 import numpy as np
 from manim import *
+from manim.utils.rate_functions import ease_out_quad, ease_in_out_quad, ease_out_cubic, linear
 
 if sys.platform == "win32":
     try:
@@ -141,12 +142,15 @@ class HanziShortScene(Scene):
 
         self.play(FadeIn(grid_group), run_time=0.4)
 
-        # 초고화질 실사 손+붓 ImageMobject
-        hand_brush = ImageMobject(self.hand_brush_path).scale_to_fit_height(4.5).set_z_index(100)
+        from stroke_mask_renderer import generate_stroke_reveal_frames, get_stroke_medial_points, get_brush_tip_relative
+
+        # 초고화질 실사 손+붓 ImageMobject (단일 원본 에셋으로 고스팅/잔상 완전 방지)
+        brush_mob = ImageMobject("assets/hand_brush_clean.png").scale_to_fit_height(4.5).set_z_index(100)
         
-        # 붓촉 끝점 오프셋 (DL 끝점에서 이미지 중심까지의 벡터)
-        # tip_x = 0.0124 * width, tip_y = 0.9881 * height
-        tip_offset = np.array([hand_brush.width * 0.4876, hand_brush.height * 0.4881, 0.0])
+        # 붓 이미지에서 실제 붓끝(Tip)의 정확한 상대 위치 파악
+        norm_tip_x, norm_tip_y = get_brush_tip_relative("assets/hand_brush_clean.png")
+        # 붓끝에서 이미지 중심까지의 벡터 (Tip -> Center)
+        tip_offset = np.array([(0.5 - norm_tip_x) * brush_mob.width, (norm_tip_y - 0.5) * brush_mob.height, 0.0])
 
         rendered_strokes = []
         is_first_stroke = True
@@ -154,51 +158,119 @@ class HanziShortScene(Scene):
         for s_idx, stroke_item in enumerate(self.animcjk_info["strokes"]):
             order = stroke_item["order"]
             stroke_svg = stroke_item["stroke_svg_path"]
+            medial_svg = stroke_item.get("medial_svg_path")
             medial_d = stroke_item.get("medial_d", "")
 
-            # 딥 코발트 블루 서예 먹물 컬러 (`#1D4ED8`)
-            stroke_mob = SVGMobject(stroke_svg).scale(2.4).move_to(grid_pos).set_color("#1D4ED8")
+            # 1. 정밀 SVG 스플라인 포인트 추출 (stroke_mask_renderer와 100% 동일한 수학적 곡선)
+            spline_pts = get_stroke_medial_points(medial_svg, num_samples=160) if medial_svg else []
+            if not spline_pts:
+                spline_pts = parse_svg_path_points(medial_d)
 
-            # 붓 진행 경로 포인트 계산
-            raw_pts = parse_svg_path_points(medial_d)
-            if raw_pts:
-                manim_pts = [svg_to_manim_point(px, py, grid_pos, scale_factor=4.8) for px, py in raw_pts]
+            if spline_pts:
+                # 2. SVG 좌표 -> Manim 좌표계 1:1 변환
+                manim_pts = [svg_to_manim_point(px, py, grid_pos, scale_factor=4.8) for px, py in spline_pts]
+                start_pt = manim_pts[0]
+                end_pt = manim_pts[-1]
+                
+                # 3. 해서체 정통 윤곽선 기반 실시간 노출 프레임 생성 (30프레임)
+                reveal_frame_paths = generate_stroke_reveal_frames(
+                    char=char,
+                    order=order,
+                    outline_svg_path=stroke_svg,
+                    medial_svg_path=medial_svg,
+                    num_frames=30
+                )
+
+                # 획 이미지 컨테이너 (격자판에 완벽 정렬)
+                stroke_reveal_mob = ImageMobject(reveal_frame_paths[0]).scale_to_fit_width(4.8).move_to(grid_pos).set_z_index(10 + order)
+
+                # 4. 붓 이동 궤적 (붓끝이 manim_pts를 0.001mm 오차도 없이 1:1 완벽 추종)
                 hand_pts = [pt + tip_offset for pt in manim_pts]
                 hand_curve = VMobject().set_points_as_corners(hand_pts)
-                start_hand_pos = hand_pts[0]
+
+                hover_offset = UP * 0.38 + RIGHT * 0.24
 
                 if is_first_stroke:
-                    # 1획 시작점에 손과 붓이 우하단에서 자연스럽게 착지
+                    # 1획: 상공 대기 위치에서 부드럽게 등장 (붓이 살짝 세워진 공중 상태)
+                    brush_mob.move_to(start_pt + tip_offset + hover_offset)
+                    self.play(FadeIn(brush_mob, shift=DR * 0.35), run_time=0.35)
+
+                    # [기필/착지 1단계]: 붓끝이 지면 시작점에 정밀 하강하여 접촉 (Touchdown)
                     self.play(
-                        FadeIn(hand_brush.move_to(start_hand_pos), shift=DR*0.6),
-                        run_time=0.5
+                        brush_mob.animate.move_to(start_pt + tip_offset),
+                        run_time=0.20,
+                        rate_func=ease_out_quad
                     )
+
+                    # [돈필/지면 안착 2단계]: 붓끝(Tip)을 지면에 고정하고 탄력적으로 지면에 눌림
+                    self.play(
+                        brush_mob.animate.scale(np.array([1.02, 0.94, 1.0]), about_point=start_pt + tip_offset),
+                        run_time=0.12,
+                        rate_func=ease_in_out_quad
+                    )
+                    self.wait(0.02)
                     is_first_stroke = False
                 else:
-                    # 다음 획 시작점으로 손이 부드럽게 이동
+                    # 이전 획 끝에서 공중으로 떠서 이번 획 상공으로 호를 그리며 이동
                     self.play(
-                        hand_brush.animate.move_to(start_hand_pos),
-                        run_time=0.4
+                        brush_mob.animate.move_to(start_pt + tip_offset + hover_offset),
+                        run_time=0.28,
+                        rate_func=ease_in_out_quad
                     )
 
-                # 손이 획을 따라가며 붓글씨 획이 실시간으로 쓰여짐
+                    # [기필/착지 1단계]: 붓끝이 지면 시작점으로 정밀 하강
+                    self.play(
+                        brush_mob.animate.move_to(start_pt + tip_offset),
+                        run_time=0.20,
+                        rate_func=ease_out_quad
+                    )
+
+                    # [돈필/지면 안착 2단계]: 붓끝 고정 상태에서 탄성 누름
+                    self.play(
+                        brush_mob.animate.scale(np.array([1.02, 0.94, 1.0]), about_point=start_pt + tip_offset),
+                        run_time=0.12,
+                        rate_func=ease_in_out_quad
+                    )
+                    self.wait(0.02)
+
+                self.add(stroke_reveal_mob)
+
+                # 붓이 이동하는 동안 해서체 완성형 획이 붓끝 위치에 맞춰 실시간으로 먹물이 채워짐
+                progress_tracker = ValueTracker(0.0)
+
+                def update_stroke_frame(mob):
+                    prog = np.clip(progress_tracker.get_value(), 0.0, 1.0)
+                    f_idx = min(int(round(prog * (len(reveal_frame_paths) - 1))), len(reveal_frame_paths) - 1)
+                    mob.pixel_array = ImageMobject(reveal_frame_paths[f_idx]).pixel_array
+
+                stroke_reveal_mob.add_updater(update_stroke_frame)
+
+                # [행필]: 붓 이동 & 해서체 먹물 채우기 완벽 동기화 실행
                 self.play(
-                    MoveAlongPath(hand_brush, hand_curve, rate_func=smooth),
-                    FadeIn(stroke_mob, rate_func=smooth),
-                    run_time=1.5
+                    MoveAlongPath(brush_mob, hand_curve, rate_func=linear),
+                    progress_tracker.animate.set_value(1.0),
+                    run_time=1.35,
+                    rate_func=linear
+                )
+
+                stroke_reveal_mob.remove_updater(update_stroke_frame)
+                rendered_strokes.append(stroke_reveal_mob)
+
+                # [수필/회봉 & 도약]: 획 종료 후 붓 탄성 복원 및 공중으로 살짝 들어올림 (Lift)
+                self.play(
+                    brush_mob.animate.scale(np.array([1.0 / 1.02, 1.0 / 0.94, 1.0]), about_point=end_pt + tip_offset).shift(hover_offset),
+                    run_time=0.18,
+                    rate_func=ease_out_cubic
                 )
             else:
-                self.play(
-                    FadeIn(stroke_mob, run_time=1.5),
-                    run_time=1.5
-                )
+                stroke_mob = SVGMobject(stroke_svg).scale(2.4).move_to(grid_pos).set_color("#1D4ED8")
+                self.play(FadeIn(stroke_mob, run_time=1.2), run_time=1.2)
+                rendered_strokes.append(stroke_mob)
 
-            self.play(Indicate(stroke_mob, scale_factor=1.02, color="#2563EB"), run_time=0.3)
-            rendered_strokes.append(stroke_mob)
-            self.wait(0.2)
+            self.wait(0.06)
 
-        # 붓글씨 완성 후 손 퇴장
-        self.play(FadeOut(hand_brush, shift=DR*0.8), run_time=0.6)
+        # 붓글씨 완성 후 손 퇴장 (자연스럽게 우하단으로 퇴장)
+        self.play(FadeOut(brush_mob, shift=DR*0.8), run_time=0.5)
 
         # 전체 글자 완성 축하 블루 플래시
         self.play(
@@ -238,7 +310,7 @@ class HanziShortScene(Scene):
             GrowFromCenter(huneum_content),
             run_time=0.7
         )
-        self.wait(0.8)
+        self.wait(3.5)
 
         # 실생활 단어 카드
         word_card = RoundedRectangle(
@@ -263,7 +335,7 @@ class HanziShortScene(Scene):
             Write(word_content),
             run_time=0.8
         )
-        self.wait(1.5)
+        self.wait(5.2)
 
         self.play(
             Indicate(word_title, scale_factor=1.05, color="#38BDF8"),

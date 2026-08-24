@@ -11,14 +11,14 @@ def generate_brush_stroke_sfx(output_path="assets/audio/brush_stroke.wav", durat
         return output_path
 
     num_samples = int(duration * sample_rate)
-    # 부드러운 화선지 마찰 텍스처 합성
+    # 부드럽고 자연스러운 화선지 붓 스침 질감 합성 (저역 통과 필터링)
     white_noise = np.random.uniform(-1, 1, num_samples)
-    window_size = 20
+    window_size = 60
     smooth_noise = np.convolve(white_noise, np.ones(window_size)/window_size, mode='same')
     
     t = np.linspace(0, 1, num_samples)
-    envelope = np.sin(np.pi * (t ** 0.85))
-    audio = smooth_noise * envelope * 0.75
+    envelope = np.sin(np.pi * (t ** 0.8)) ** 1.5
+    audio = smooth_noise * envelope * 0.40
     audio_int16 = (audio * 32767).astype(np.int16)
     
     with wave.open(output_path, 'wb') as wav_file:

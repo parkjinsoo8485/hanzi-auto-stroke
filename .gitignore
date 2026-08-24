@@ -8,5 +8,13 @@ media/
 __pycache__/
 *.pyc
 
-# Temp video captures / raw files
-ref_video.mp4.webm
+# Generated outputs & video caches
+output/
+*.mp4
+*.webm
+*.wav
+assets/reveal_cache/
+assets/animcjk_cache/
+assets/svg_hanzi/
+assets/svg_drawings/
+assets/audio/char_*/
