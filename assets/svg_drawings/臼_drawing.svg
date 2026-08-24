@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#FFFDE7"/>
+  <!-- 통나무 절구통 외형 -->
+  <path d="M120 120 L392 120 C360 240 380 360 400 440 L112 440 C132 360 152 240 120 120 Z" fill="#8D6E63" stroke="#4E342E" stroke-width="16"/>
+  <!-- 절구 안 오목한 곡식 찧는 홈 -->
+  <ellipse cx="256" cy="140" rx="120" ry="40" fill="#D7CCC8" stroke="#4E342E" stroke-width="10"/>
+  <ellipse cx="256" cy="140" rx="90" ry="25" fill="#5D4037"/>
+  <!-- 절구 속 하얀 쌀/곡식 알갱이들 -->
+  <circle cx="240" cy="140" r="8" fill="#FFFFFF"/>
+  <circle cx="265" cy="142" r="7" fill="#FFFFFF"/>
+  <circle cx="252" cy="135" r="6" fill="#FFFFFF"/>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#FFFDE7"/>
+  <!-- 절구 방망이 (양 끝이 굵고 가운데가 잘록한 전통 공이) -->
+  <path d="M226 60 L286 60 Q270 200 266 256 Q270 312 286 452 L226 452 Q242 312 246 256 Q242 200 226 60 Z" fill="#A1887F" stroke="#4E342E" stroke-width="14"/>
+  <!-- 공이 타격부 링 장식 -->
+  <ellipse cx="256" cy="70" rx="30" ry="10" fill="#6D4C41"/>
+  <ellipse cx="256" cy="442" rx="30" ry="10" fill="#6D4C41"/>
+</svg>

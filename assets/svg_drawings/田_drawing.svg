@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#E8F5E9"/>
+  <rect x="56" y="56" width="400" height="400" rx="32" fill="#81C784" stroke="#2E7D32" stroke-width="20"/>
+  <!-- 논둑 사분할 -->
+  <line x1="256" y1="56" x2="256" y2="456" stroke="#4E342E" stroke-width="24" stroke-linecap="round"/>
+  <line x1="56" y1="256" x2="456" y2="256" stroke="#4E342E" stroke-width="24" stroke-linecap="round"/>
+  <!-- 밭고랑 작물 새싹들 -->
+  <circle cx="156" cy="156" r="28" fill="#2E7D32"/>
+  <circle cx="356" cy="156" r="28" fill="#2E7D32"/>
+  <circle cx="156" cy="356" r="28" fill="#2E7D32"/>
+  <circle cx="356" cy="356" r="28" fill="#2E7D32"/>
+  <path d="M156 128 Q140 100 120 110 Q140 135 156 128 Z" fill="#66BB6A"/>
+  <path d="M356 128 Q340 100 320 110 Q340 135 356 128 Z" fill="#66BB6A"/>
+  <path d="M156 328 Q140 300 120 310 Q140 335 156 328 Z" fill="#66BB6A"/>
+  <path d="M356 328 Q340 300 320 310 Q340 335 356 328 Z" fill="#66BB6A"/>
+</svg>

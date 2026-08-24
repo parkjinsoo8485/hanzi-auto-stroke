@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#FFF8E1"/>
+  <!-- 술 그릇 몸통 -->
+  <path d="M120 180 L392 180 L350 420 L162 420 Z" fill="#D7CCC8" stroke="#4E342E" stroke-width="16"/>
+  <!-- 향긋한 울금 풀 잎들 -->
+  <path d="M220 200 Q200 130 160 140 Q180 190 220 200 Z" fill="#4CAF50"/>
+  <path d="M292 200 Q312 130 352 140 Q332 190 292 200 Z" fill="#66BB6A"/>
+  <!-- 황금빛 향기 술방울 -->
+  <circle cx="256" cy="300" r="40" fill="#FFC107" stroke="#FFA000" stroke-width="8"/>
+  <circle cx="256" cy="300" r="20" fill="#FFE082"/>
+  <!-- 술 뜨는 긴 옥국자 손잡이 -->
+  <line x1="256" y1="300" x2="380" y2="80" stroke="#00796B" stroke-width="14" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#E0F2F1"/>
+  <!-- 깎아지른 바위 언덕(厂) -->
+  <path d="M60 80 L440 80 L440 140 L160 140 L160 440 L60 440 Z" fill="#78909C" stroke="#37474F" stroke-width="14"/>
+  <!-- 샘물이 솟아나는 옹달샘(泉) -->
+  <circle cx="310" cy="270" r="70" fill="#00B0FF" stroke="#0091EA" stroke-width="12"/>
+  <circle cx="310" cy="270" r="45" fill="#E1F5FE"/>
+  <!-- 솟구치는 물줄기 파동 -->
+  <path d="M310 270 Q380 340 430 420" fill="none" stroke="#00B0FF" stroke-width="14" stroke-linecap="round"/>
+  <path d="M280 310 Q310 380 340 440" fill="none" stroke="#40C4FF" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="340" cy="220" r="14" fill="#00B0FF"/>
+</svg>

@@ -14,25 +14,21 @@
 
 ---
 
-## 🚀 빠른 시작
-
-### 1. 가상환경 세팅 및 패키지 설치
-```powershell
-python -m venv .venv
-.\.venv\Scripts\pip install manim edge-tts svgelements pygame pydub opencv-python Pillow
-```
-
-### 2. 숏폼 생성 실행
-```powershell
-# 「大」(큰 대) 숏폼 영상 렌더링
-.\.venv\Scripts\python.exe run_generator.py --char 大 --quality m
-
-# 「日」(날 일) 숏폼 영상 렌더링
-.\.venv\Scripts\python.exe run_generator.py --char 日 --quality m
-
-# 「木」(나무 목) 숏폼 영상 렌더링
-.\.venv\Scripts\python.exe run_generator.py --char 木 --quality m
-```
+## 🚀 다른 컴퓨터에서 빠른 시작 (원클릭)
+ 
+ ### 방법 1: `START.bat` 더블클릭 (가장 추천)
+ 1. GitHub에서 본 저장소를 `git clone` 합니다.
+ 2. 폴더 안에 있는 **`START.bat`** 파일을 더블클릭합니다.
+ 3. 시스템이 자동으로 **FFmpeg 설치 여부 / Python 가상환경 / 필수 라이브러리 / 160자 에셋**을 점검하고 **누락된 것이 있으면 전자동으로 설치**한 후 메뉴를 띄워줍니다.
+ 
+ ### 방법 2: 수동 명령어로 실행
+ ```powershell
+ # 1. 환경 자동 세팅 스크립트 실행
+ .\setup_environment.bat
+ 
+ # 2. 원하는 한자 숏폼 렌더링
+ .\.venv\Scripts\python.exe run_generator.py --char 車 --quality m
+ ```
 
 ---
 

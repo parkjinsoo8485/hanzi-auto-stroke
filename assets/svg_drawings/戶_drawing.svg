@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#FAFAFA"/>
+  <!-- 문틀 -->
+  <rect x="100" y="60" width="312" height="392" rx="16" fill="#D7CCC8" stroke="#5D4037" stroke-width="16"/>
+  <!-- 외짝 문판 -->
+  <rect x="124" y="84" width="264" height="344" fill="#FFF9C4" stroke="#8D6E63" stroke-width="10"/>
+  <!-- 전통 창살 무늬 -->
+  <line x1="124" y1="200" x2="388" y2="200" stroke="#8D6E63" stroke-width="8"/>
+  <line x1="124" y1="300" x2="388" y2="300" stroke="#8D6E63" stroke-width="8"/>
+  <line x1="210" y1="84" x2="210" y2="428" stroke="#8D6E63" stroke-width="8"/>
+  <line x1="300" y1="84" x2="300" y2="428" stroke="#8D6E63" stroke-width="8"/>
+  <!-- 문고리 배꼽 -->
+  <circle cx="160" cy="256" r="18" fill="#FFB300" stroke="#E65100" stroke-width="4"/>
+  <path d="M160 270 L160 305" stroke="#E65100" stroke-width="8" stroke-linecap="round"/>
+</svg>

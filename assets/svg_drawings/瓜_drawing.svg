@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#F1F8E9"/>
+  <!-- 덩굴 줄기 -->
+  <path d="M60 100 Q180 60 256 120 Q340 180 452 110" fill="none" stroke="#558B2F" stroke-width="14" stroke-linecap="round"/>
+  <!-- 덩굴손 꼬임 -->
+  <path d="M180 80 Q160 30 130 50 Q120 80 150 90" fill="none" stroke="#7CB342" stroke-width="8"/>
+  <!-- 매달린 둥글넓적한 노란 참외/박 -->
+  <ellipse cx="256" cy="290" rx="120" ry="150" fill="#FDD835" stroke="#F57F17" stroke-width="14"/>
+  <!-- 꼭지 -->
+  <path d="M256 140 L256 120" stroke="#558B2F" stroke-width="14" stroke-linecap="round"/>
+  <!-- 참외 흰 줄무늬들 -->
+  <path d="M256 140 Q210 290 256 440" fill="none" stroke="#FFF9C4" stroke-width="10"/>
+  <path d="M256 140 Q170 290 216 430" fill="none" stroke="#FFF9C4" stroke-width="10"/>
+  <path d="M256 140 Q342 290 296 430" fill="none" stroke="#FFF9C4" stroke-width="10"/>
+</svg>

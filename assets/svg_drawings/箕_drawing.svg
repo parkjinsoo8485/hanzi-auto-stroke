@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#FFF9C4"/>
+  <!-- ㄷ자형 대나무 키 바닥 판 -->
+  <path d="M100 100 L412 100 L370 420 L142 420 Z" fill="#FFE082" stroke="#FF8F00" stroke-width="16"/>
+  <!-- 뒤쪽 높은 테두리 -->
+  <path d="M100 100 Q256 60 412 100 L400 140 Q256 100 112 140 Z" fill="#FFA000"/>
+  <!-- 대나무 엮음 살무늬 -->
+  <line x1="130" y1="180" x2="382" y2="180" stroke="#FFB300" stroke-width="8"/>
+  <line x1="140" y1="260" x2="372" y2="260" stroke="#FFB300" stroke-width="8"/>
+  <line x1="150" y1="340" x2="362" y2="340" stroke="#FFB300" stroke-width="8"/>
+  <line x1="200" y1="120" x2="190" y2="410" stroke="#FFB300" stroke-width="8"/>
+  <line x1="256" y1="100" x2="256" y2="415" stroke="#FF8F00" stroke-width="10"/>
+  <line x1="312" y1="120" x2="322" y2="410" stroke="#FFB300" stroke-width="8"/>
+</svg>

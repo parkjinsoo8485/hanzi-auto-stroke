@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#EFEBE9"/>
+  <!-- 펼쳐놓은 동물 가죽 윤곽 (네 다리와 꼬리가 있는 호피/우피 형태) -->
+  <path d="M220 60 Q256 50 292 60 Q340 100 420 110 Q400 180 360 210 Q420 300 440 390 Q360 400 310 360 Q256 420 202 360 Q152 400 72 390 Q92 300 152 210 Q112 180 92 110 Q172 100 220 60 Z" fill="#D7CCC8" stroke="#5D4037" stroke-width="14"/>
+  <!-- 가죽 질감 얼룩무늬 -->
+  <ellipse cx="256" cy="220" rx="30" ry="18" fill="#8D6E63"/>
+  <ellipse cx="190" cy="280" rx="24" ry="14" fill="#8D6E63"/>
+  <ellipse cx="320" cy="280" rx="24" ry="14" fill="#8D6E63"/>
+</svg>

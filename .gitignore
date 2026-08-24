@@ -13,8 +13,10 @@ output/
 *.mp4
 *.webm
 *.wav
+# Temporary data / caches
+assets/openmoji_all.json
+assets/current_char.json
 assets/reveal_cache/
 assets/animcjk_cache/
 assets/svg_hanzi/
-assets/svg_drawings/
 assets/audio/char_*/

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#F3E5F5"/>
+  <!-- 걸이 틀 (프레임) -->
+  <rect x="80" y="50" width="352" height="30" rx="8" fill="#5D4037" stroke="#3E2723" stroke-width="8"/>
+  <rect x="100" y="70" width="24" height="390" fill="#5D4037"/>
+  <rect x="388" y="70" width="24" height="390" fill="#5D4037"/>
+  <!-- 끈에 매달린 옥/돌 경쇠 (ㄱ자 꺾인 모양) -->
+  <line x1="200" y1="80" x2="200" y2="160" stroke="#D32F2F" stroke-width="8"/>
+  <line x1="312" y1="80" x2="312" y2="160" stroke="#D32F2F" stroke-width="8"/>
+  <path d="M140 200 L256 160 L372 260 L340 320 L256 240 L160 270 Z" fill="#80CBC4" stroke="#004D40" stroke-width="14"/>
+  <!-- 타악 채 -->
+  <line x1="320" y1="360" x2="420" y2="280" stroke="#FFB300" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="320" cy="360" r="20" fill="#D32F2F"/>
+</svg>

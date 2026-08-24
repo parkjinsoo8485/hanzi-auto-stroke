@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#EFEBE9"/>
+  <!-- 입구 전 -->
+  <rect x="140" y="100" width="232" height="36" rx="8" fill="#8D6E63" stroke="#4E342E" stroke-width="12"/>
+  <!-- 불룩한 몸체와 주머니 모양 세 발 -->
+  <path d="M150 136 C100 220 80 320 120 440 L170 440 C190 350 210 320 256 320 C302 320 322 350 342 440 L392 440 C432 320 412 220 362 136 Z" fill="#A1887F" stroke="#4E342E" stroke-width="16"/>
+  <!-- 토기 무늬 새김선 -->
+  <line x1="160" y1="210" x2="352" y2="210" stroke="#4E342E" stroke-width="8" stroke-dasharray="12 12"/>
+  <line x1="180" y1="260" x2="332" y2="260" stroke="#4E342E" stroke-width="8" stroke-dasharray="12 12"/>
+</svg>

@@ -11,11 +11,13 @@ echo.
 
 cd /d "%~dp0"
 
-if exist ".venv\Scripts\python.exe" (
-    set PYTHON_EXE=.venv\Scripts\python.exe
-) else (
-    set PYTHON_EXE=python
+:: 1. 필수 환경 점검 (가상환경이나 패키지가 없으면 자동 설치 실행)
+if not exist ".venv\Scripts\python.exe" (
+    echo [*] 새 컴퓨터 환경 감지: 필수 환경 자동 설치를 시작합니다...
+    call setup_environment.bat
 )
+
+set PYTHON_EXE=.venv\Scripts\python.exe
 
 %PYTHON_EXE% run_generator.py --all --quality m
 
