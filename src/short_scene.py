@@ -43,7 +43,18 @@ class HanziShortScene(Scene):
         from hanzi_data import HANZI_DATABASE
         from animcjk_loader import parse_animcjk_strokes
         
-        char_key = os.environ.get("HANZI_CHAR", "大")
+        import json
+        char_key = "大"
+        current_char_file = "assets/current_char.json"
+        if os.path.exists(current_char_file):
+            try:
+                with open(current_char_file, "r", encoding="utf-8") as f:
+                    char_key = json.load(f).get("char", "大")
+            except Exception:
+                char_key = os.environ.get("HANZI_CHAR", "大")
+        else:
+            char_key = os.environ.get("HANZI_CHAR", "大")
+
         self.char_data = HANZI_DATABASE.get(char_key, HANZI_DATABASE["大"])
         self.animcjk_info = parse_animcjk_strokes(char_key)
         self.hand_brush_path = "assets/hand_brush_clean.png"
@@ -75,12 +86,14 @@ class HanziShortScene(Scene):
         # ==========================================
         morph_center = UP * 2.0
 
-        drawing_svg_path = f"assets/svg_drawings/{char}_drawing.svg"
+        clean_char = char.replace("/", "_")
+        drawing_svg_path = f"assets/svg_drawings/{clean_char}_drawing.svg"
         os.makedirs(os.path.dirname(drawing_svg_path), exist_ok=True)
         with open(drawing_svg_path, "w", encoding="utf-8") as f:
             f.write(self.char_data["drawing_svg"])
 
-        pictogram = SVGMobject(drawing_svg_path).scale(2.3).move_to(morph_center).set_color("#1E3A8A")
+        # 원본 일러스트 컬러를 그대로 보존 (단색 파란 상자화 방지)
+        pictogram = SVGMobject(drawing_svg_path).scale(2.5).move_to(morph_center)
         
         caption_box = RoundedRectangle(
             corner_radius=0.15, width=7.4, height=0.8,

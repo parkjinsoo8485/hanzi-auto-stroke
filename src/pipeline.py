@@ -82,6 +82,12 @@ def run_pipeline(char="大", quality="m", preview=False):
         "--disable_caching"
     ]
     
+    # 인코딩 깨짐 방지를 위해 JSON 파일로 현재 한자 전달
+    os.makedirs("assets", exist_ok=True)
+    import json
+    with open("assets/current_char.json", "w", encoding="utf-8") as f:
+        json.dump({"char": char}, f, ensure_ascii=False)
+
     env = os.environ.copy()
     env["HANZI_CHAR"] = char
     print(f"실행 명령: {' '.join(manim_cmd)} (한자: {char})")
@@ -93,19 +99,21 @@ def run_pipeline(char="大", quality="m", preview=False):
     else:
         print("[Manim] 렌더링 완료!")
 
-    # 4. 렌더링된 비디오 파일 찾기
+    # 4. 가장 최근에 렌더링된 비디오 파일 찾기
     media_dir = "media/videos/short_scene"
-    rendered_mp4 = None
+    candidate_mp4s = []
     for root, dirs, files in os.walk(media_dir):
         for f in files:
             if f.endswith(".mp4") and "HanziShortScene" in f:
-                rendered_mp4 = os.path.join(root, f)
-                break
+                full_p = os.path.join(root, f)
+                candidate_mp4s.append(full_p)
     
-    if not rendered_mp4 or not os.path.exists(rendered_mp4):
-        print(f"[Error] 렌더링된 MP4 비디오를 찾을 수 없습니다: {rendered_mp4}")
+    if not candidate_mp4s:
+        print(f"[Error] 렌더링된 MP4 비디오를 찾을 수 없습니다.")
         return False
     
+    # 가장 최근에 생성된 비디오 선택
+    rendered_mp4 = max(candidate_mp4s, key=os.path.getmtime)
     print(f"-> 기본 비디오 경로: {rendered_mp4}")
 
     # 5. FFmpeg를 통한 멀티트랙 오디오 & SFX, BGM 믹싱
