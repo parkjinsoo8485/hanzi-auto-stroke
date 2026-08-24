@@ -1,12 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#E3F2FD"/>
-  <!-- 제비 몸통 & 날렵한 날개 -->
   <path d="M256 80 Q290 120 290 200 L440 250 Q300 270 280 340 L340 450 L256 380 L172 450 L232 340 Q212 270 72 250 L222 200 Q222 120 256 80 Z" fill="#263238" stroke="#102027" stroke-width="8"/>
-  <!-- 제비 흰 배 -->
   <ellipse cx="256" cy="250" rx="36" ry="60" fill="#ECEFF1"/>
-  <!-- 붉은 목덜미 -->
   <circle cx="256" cy="130" r="20" fill="#D32F2F"/>
-  <!-- 부리와 눈 -->
   <polygon points="256,50 248,80 264,80" fill="#FFA000"/>
   <circle cx="248" cy="95" r="4" fill="#FFFFFF"/>
   <circle cx="264" cy="95" r="4" fill="#FFFFFF"/>

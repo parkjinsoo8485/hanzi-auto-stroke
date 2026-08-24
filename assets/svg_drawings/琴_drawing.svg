@@ -1,9 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#FFFDE7"/>
-  <!-- 오동나무 공명판 울림통 -->
   <rect x="120" y="50" width="272" height="412" rx="30" fill="#8D6E63" stroke="#4E342E" stroke-width="16"/>
   <ellipse cx="256" cy="256" rx="32" ry="16" fill="#3E2723"/>
-  <!-- 7현 현악기 줄 (Strings) -->
   <line x1="160" y1="60" x2="160" y2="450" stroke="#FFF9C4" stroke-width="6"/>
   <line x1="192" y1="60" x2="192" y2="450" stroke="#FFF9C4" stroke-width="6"/>
   <line x1="224" y1="60" x2="224" y2="450" stroke="#FFF9C4" stroke-width="6"/>
@@ -11,7 +9,6 @@
   <line x1="288" y1="60" x2="288" y2="450" stroke="#FFF9C4" stroke-width="6"/>
   <line x1="320" y1="60" x2="320" y2="450" stroke="#FFF9C4" stroke-width="6"/>
   <line x1="352" y1="60" x2="352" y2="450" stroke="#FFF9C4" stroke-width="6"/>
-  <!-- 줄을 받치는 안족(기러기발) 브릿지 -->
   <path d="M150 160 L170 170 L150 180 Z" fill="#FFE082"/>
   <path d="M182 200 L202 210 L182 220 Z" fill="#FFE082"/>
   <path d="M214 240 L234 250 L214 260 Z" fill="#FFE082"/>

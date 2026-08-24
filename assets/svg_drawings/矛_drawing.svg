@@ -1,10 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#ECEFF1"/>
-  <!-- 긴 장창 자루 -->
   <line x1="90" y1="422" x2="360" y2="152" stroke="#4E342E" stroke-width="20" stroke-linecap="round"/>
-  <!-- 날카로운 양날 창끝 -->
   <path d="M340 170 Q430 100 460 52 Q412 142 362 192 Z" fill="#B0BEC5" stroke="#263238" stroke-width="10"/>
   <line x1="350" y1="180" x2="455" y2="57" stroke="#ECEFF1" stroke-width="6"/>
-  <!-- 붉은 깃발/술 장식 -->
   <path d="M330 180 Q310 240 280 260 Q320 230 350 200 Z" fill="#C62828"/>
 </svg>

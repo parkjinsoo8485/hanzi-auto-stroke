@@ -60,7 +60,7 @@ def run_pipeline(char="大", quality="m", preview=False):
     print("\n[Step 2] 한국어/원어민 영어 듀얼, 획별 가이드 TTS & 붓 SFX & 동양풍 BGM 생성 중...")
     audio_paths = prepare_hanzi_audios(HANZI_DATABASE[char])
     sfx_path = generate_brush_stroke_sfx("assets/audio/brush_stroke.wav", duration=1.5)
-    bgm_path = generate_traditional_hanzi_bgm("assets/audio/hanzi_study_bgm.wav", duration=35.0)
+    bgm_path = generate_traditional_hanzi_bgm("assets/audio/hanzi_study_bgm.wav", char=char, duration=35.0)
     print(f"-> 오디오 & SFX, BGM 준비 완료!")
 
     # 3. Manim 렌더링
@@ -125,49 +125,52 @@ def run_pipeline(char="大", quality="m", preview=False):
     # 오디오 인풋 리스트 구성
     inputs = ["-i", rendered_mp4.replace("\\", "/")]
     
-    # 1번: 훅 (0.8s = 800ms) - 첫 한국어 발음 음량 1.8배 증폭
+    # 1번: 훅 (0.8s = 800ms) - 인트로 상형 설명 음성 2.4배로 크고 시원하게 전달
     inputs.extend(["-i", audio_paths["hook"].replace("\\", "/")])
-    filter_parts = ["[1:a]adelay=800|800,volume=1.8[a_hook]"]
+    filter_parts = ["[1:a]adelay=800|800,volume=2.4[a_hook]"]
     mix_inputs = ["[a_hook]"]
 
     input_idx = 2
-    stroke_start_time = 4000  # 4.0초
+    stroke_start_time = 7300  # 7.3초 (생각할 여유 시간 2초 및 자연스러운 모핑 감상 시간 반영)
     stroke_interval = 2200    # 획당 약 2.2초 간격
     
-    # 획별 가이드 음성 및 붓글씨 SFX 추가
+    # 획별 가이드 음성 추가 (획순 쓰는 동안 거슬리는 마찰음/노이즈 일체 제거)
     for s_idx, s_path in enumerate(audio_paths["strokes"]):
-        # 가이드 음성 (볼륨 1.4배)
+        # 가이드 음성 (순우리말 첫 번째, 두 번째... 볼륨 1.8배로 또렷하게)
         inputs.extend(["-i", s_path.replace("\\", "/")])
         delay_ms = stroke_start_time + s_idx * stroke_interval
-        filter_parts.append(f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume=1.4[a_s{s_idx}]")
+        filter_parts.append(f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume=1.8[a_s{s_idx}]")
         mix_inputs.append(f"[a_s{s_idx}]")
-        input_idx += 1
-
-        # 붓글씨 마찰 SFX (소프트 0.65배)
-        inputs.extend(["-i", sfx_path.replace("\\", "/")])
-        sfx_delay = delay_ms + 200
-        filter_parts.append(f"[{input_idx}:a]adelay={sfx_delay}|{sfx_delay},volume=0.65[a_sfx{s_idx}]")
-        mix_inputs.append(f"[a_sfx{s_idx}]")
         input_idx += 1
 
     # 훈음 오디오 (획 작성 종료 후)
     huneum_time = stroke_start_time + len(audio_paths["strokes"]) * stroke_interval + 400
     huneum_dur_ms = int(get_audio_duration(audio_paths["huneum"]) * 1000)
     inputs.extend(["-i", audio_paths["huneum"].replace("\\", "/")])
-    filter_parts.append(f"[{input_idx}:a]adelay={huneum_time}|{huneum_time},volume=1.4[a_huneum]")
+    filter_parts.append(f"[{input_idx}:a]adelay={huneum_time}|{huneum_time},volume=1.8[a_huneum]")
     mix_inputs.append("[a_huneum]")
     input_idx += 1
 
     # 실생활 단어 오디오 (훈음 오디오 재생이 완전히 끝난 후 + 600ms 여유 버퍼 -> 겹침 원천 방지)
     word_time = huneum_time + huneum_dur_ms + 600
     inputs.extend(["-i", audio_paths["example_word"].replace("\\", "/")])
-    filter_parts.append(f"[{input_idx}:a]adelay={word_time}|{word_time},volume=1.4[a_word]")
+    filter_parts.append(f"[{input_idx}:a]adelay={word_time}|{word_time},volume=1.8[a_word]")
     mix_inputs.append("[a_word]")
     input_idx += 1
 
-    # 동양풍 한자 서예 훅 BGM 추가 (볼륨 0.22로 인트로 비트와 가야금 훅 멜로디의 생동감 부여)
+    # 동양풍 한자 서예 훅 BGM 추가
+    # 📌 [핵심 개선] 인트로 상형 유추 및 모핑 구간(0~6.8s)에 BGM 재생 후,
+    # 실제 한자 획순 쓰기 구간(7.1s ~ 획 작성 완료 시점)에는 배경음/BGM을 완전히 100% 무음 처리!
     inputs.extend(["-i", bgm_path.replace("\\", "/")])
-    filter_parts.append(f"[{input_idx}:a]volume=0.22[a_bgm]")
+    writing_start_s = 7.1
+    writing_end_s = max(round(huneum_time / 1000.0, 2), 8.0)
+    bgm_filter = (
+        f"[{input_idx}:a]volume='if(lt(t,6.8),0.18,"
+        f"if(lt(t,{writing_start_s}),0.18*({writing_start_s}-t)/0.3,"
+        f"if(lt(t,{writing_end_s}),0,"
+        f"if(lt(t,{writing_end_s}+0.6),0.22*(t-{writing_end_s})/0.6,0.22))))':eval=frame[a_bgm]"
+    )
+    filter_parts.append(bgm_filter)
     mix_inputs.append("[a_bgm]")
     input_idx += 1
     total_audio_tracks = len(mix_inputs)

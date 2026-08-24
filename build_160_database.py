@@ -200,6 +200,18 @@ def make_default_svg(char, desc):
   <circle cx="784" cy="784" r="40" fill="#3B82F6" opacity="0.7"/>
 </svg>"""
 
+KOREAN_ORDINALS = {
+    1: "첫 번째", 2: "두 번째", 3: "세 번째", 4: "네 번째", 5: "다섯 번째",
+    6: "여섯 번째", 7: "일곱 번째", 8: "여덟 번째", 9: "아홉 번째", 10: "열 번째",
+    11: "열한 번째", 12: "열두 번째", 13: "열세 번째", 14: "열네 번째", 15: "열다섯 번째",
+    16: "열여섯 번째", 17: "열일곱 번째", 18: "열여덟 번째", 19: "열아홉 번째", 20: "스무 번째",
+    21: "스물한 번째", 22: "스물두 번째", 23: "스물세 번째", 24: "스물네 번째", 25: "스물다섯 번째",
+    26: "스물여섯 번째", 27: "스물일곱 번째", 28: "스물여덟 번째", 29: "스물아홉 번째", 30: "서른 번째"
+}
+
+def get_korean_ordinal_stroke(order: int) -> str:
+    return f"{KOREAN_ORDINALS.get(order, f'{order}번째')} 획!"
+
 def build():
     # 중복 제거 및 무결성 검사
     seen = set()
@@ -217,7 +229,7 @@ def build():
     # 데이터베이스 딕셔너리 생성
     database = {}
     for char, hun_eum, hun_eum_en, sound_desc, example_word, example_word_desc, stroke_count in cleaned:
-        stroke_names = [f"{i}번째 획!" for i in range(1, stroke_count + 1)]
+        stroke_names = [get_korean_ordinal_stroke(i) for i in range(1, stroke_count + 1)]
         database[char] = {
             "char": char,
             "stroke_count": stroke_count,
@@ -237,9 +249,9 @@ def build():
         for k, v in OLD_DB.items():
             if k in database and "drawing_svg" in v and "viewBox" in v["drawing_svg"] and not "font-family=\"Batang" in v["drawing_svg"]:
                 database[k]["drawing_svg"] = v["drawing_svg"]
-                if "stroke_names" in v and len(v["stroke_names"]) == database[k]["stroke_count"]:
-                    database[k]["stroke_names"] = v["stroke_names"]
-        print("✨ 기존 고화질 특화 SVG 보존 완료!")
+            if k in database:
+                database[k]["stroke_names"] = [get_korean_ordinal_stroke(i) for i in range(1, database[k]["stroke_count"] + 1)]
+        print("✨ 기존 고화질 특화 SVG 보존 및 순우리말 획순 서수사 적용 완료!")
     except Exception as e:
         print(f"기존 DB 로드 스킵: {e}")
 

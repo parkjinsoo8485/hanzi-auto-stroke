@@ -14,12 +14,12 @@ echo [1/4] 시스템 환경 확인 중...
 where ffmpeg >nul 2>nul
 if %errorlevel% neq 0 (
     echo [*] 영상 렌더링 필수 도구인 FFmpeg가 설치되어 있지 않습니다.
-    echo [*] winget(Windows 패키지 관리자)을 통해 FFmpeg 설치를 시도합니다...
+    echo [*] winget[Windows 패키지 관리자]을 통해 FFmpeg 설치를 시도합니다...
     winget install "Gyan.FFmpeg" --accept-source-agreements --accept-package-agreements
     if %errorlevel% neq 0 (
         echo [경고] winget 자동 설치 실패. 수동 설치 링크: https://www.gyan.dev/ffmpeg/builds/
     ) else (
-        echo [V] FFmpeg 설치 완료! (환경변수 적용을 위해 설치 후 창을 다시 열어야 할 수 있습니다.)
+        echo [V] FFmpeg 설치 완료! [환경변수 적용을 위해 설치 후 창을 다시 열어야 할 수 있습니다.]
     )
 ) else (
     echo [V] FFmpeg가 이미 시스템에 설치되어 있습니다.
@@ -37,7 +37,7 @@ if not exist ".venv" (
         exit /b 1
     )
 ) else (
-    echo [V] 가상환경(.venv)이 이미 존재합니다.
+    echo [V] 가상환경[.venv]이 이미 존재합니다.
 )
 
 :: 4. 필수 Python 라이브러리 자동 설치

@@ -1,1 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#D1D3D4" d="M5 23h26v7H5z"/><path fill="#D99E82" d="M0 36h36l-4-7H4z"/><path fill="#66757F" d="M30 20H6l-5 4h34z"/><path fill="#D1D3D4" d="M18 9.882L9.764 14h16.472z"/><path fill="#66757F" d="M30 14l-1-5H7l-1 5-4 3h32l-4-3zM18 9.882L26.236 14H9.764L18 9.882z"/><path fill="#D1D3D4" d="M6 17h24v3H6zm18-8V5H12v4h-2v2h16V9z"/><path fill="#66757F" d="M12 2h12v2l2 2H10l2-2z"/><path fill="#99AAB5" d="M23 0v1H13V0h-1v2h12V0z"/><path fill="#66757F" d="M30 14.764l-5.105-2.553-6-3L18 8.764l-.895.447-6 3L6 14.764V16h24v-1.236zM12 14l6-3 6 3H12z"/><path fill="#6D6E71" d="M5 27h26v2H5z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#ECEFF1"/>
+  <!-- 성벽 몸체와 성가퀴(여장, 배틀먼트) -->
+  <path d="M50 200 L110 200 L110 230 L170 230 L170 200 L230 200 L230 230 L290 230 L290 200 L350 200 L350 230 L410 230 L410 200 L462 200 L462 450 L50 450 Z" fill="#607D8B" stroke="#263238" stroke-width="14"/>
+  <!-- 성벽 석축 돌무늬선 -->
+  <line x1="50" y1="280" x2="462" y2="280" stroke="#37474F" stroke-width="8"/>
+  <line x1="50" y1="360" x2="462" y2="360" stroke="#37474F" stroke-width="8"/>
+  <!-- 웅장한 아치형 무지개 성문(홍예문) -->
+  <path d="M190 450 L190 340 Q256 280 322 340 L322 450 Z" fill="#263238" stroke="#FFD54F" stroke-width="8"/>
+  <!-- 성루 누각 지붕 -->
+  <path d="M120 120 Q256 60 392 120 L370 170 Q256 120 142 170 Z" fill="#D32F2F" stroke="#3E2723" stroke-width="10"/>
+</svg>

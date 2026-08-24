@@ -1,12 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#FBE9E7"/>
-  <!-- 긴 창 자루 (나무) -->
   <line x1="80" y1="440" x2="380" y2="100" stroke="#5D4037" stroke-width="22" stroke-linecap="round"/>
-  <!-- 꺾인 청동 날 (ㄱ자 꺾창) -->
   <path d="M350 130 L450 70 L430 160 L380 180 Z" fill="#78909C" stroke="#263238" stroke-width="10"/>
-  <!-- 아래로 향한 갈고리 날 -->
   <path d="M330 150 L270 230 L310 240 Z" fill="#90A4AE" stroke="#263238" stroke-width="8"/>
-  <!-- 붉은 술 장식 -->
   <circle cx="350" cy="140" r="18" fill="#D32F2F"/>
   <path d="M350 140 Q330 190 320 220" stroke="#D32F2F" stroke-width="8" stroke-linecap="round"/>
 </svg>

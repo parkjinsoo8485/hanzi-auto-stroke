@@ -86,29 +86,52 @@ def generate_speech(text: str, output_path: str, voice: str = VOICE_KO, rate: st
     """동기식 래퍼 함수"""
     asyncio.run(generate_speech_async(text, output_path, voice, rate, pitch, volume))
 
+KOREAN_ORDINALS = {
+    1: "첫 번째", 2: "두 번째", 3: "세 번째", 4: "네 번째", 5: "다섯 번째",
+    6: "여섯 번째", 7: "일곱 번째", 8: "여덟 번째", 9: "아홉 번째", 10: "열 번째",
+    11: "열한 번째", 12: "열두 번째", 13: "열세 번째", 14: "열네 번째", 15: "열다섯 번째",
+    16: "열여섯 번째", 17: "열일곱 번째", 18: "열여덟 번째", 19: "열아홉 번째", 20: "스무 번째",
+    21: "스물한 번째", 22: "스물두 번째", 23: "스물세 번째", 24: "스물네 번째", 25: "스물다섯 번째",
+    26: "스물여섯 번째", 27: "스물일곱 번째", 28: "스물여덟 번째", 29: "스물아홉 번째", 30: "서른 번째"
+}
+
+def format_korean_stroke_text(raw_text: str, order: int) -> str:
+    """한번째 획 등 어색한 수사 발음을 '첫 번째 획!', '두 번째 획!' 순우리말 서수사로 완벽 변환"""
+    if raw_text:
+        # 역순으로 치환하여 11번째가 1번째로 잘못 부분치환되는 현상 방지
+        for num in sorted(KOREAN_ORDINALS.keys(), reverse=True):
+            ord_kr = KOREAN_ORDINALS[num]
+            raw_text = raw_text.replace(f"{num}번째", f"{ord_kr}")
+            raw_text = raw_text.replace(f"{num} 번째", f"{ord_kr}")
+        if not raw_text.endswith("!"):
+            raw_text += "!"
+        return raw_text
+    return f"{KOREAN_ORDINALS.get(order, f'{order}번째')} 획!"
+
 def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
     """한자 항목에 필요한 한국어/원어민 영어 듀얼 오디오 및 획별 가이드 음성 일괄 생성"""
     char = hanzi_info["char"]
     char_audio_dir = os.path.join(base_dir, f"char_{char}")
     os.makedirs(char_audio_dir, exist_ok=True)
 
-    # 1. 훅 오디오 (처음 한자 의미 설명: 괄호 안 한글 생략 및 자연스러운 띄어 읽기 적용)
+    # 1. 훅 오디오 (처음 한자 의미 설명: 또렷하고 웅장하게 들리도록 볼륨 +50% 및 자연스러운 속도 적용)
     hook_path = os.path.join(char_audio_dir, "hook.mp3")
     spoken_hook = clean_hook_text(hanzi_info['sound_desc'])
-    generate_speech(f"{spoken_hook}!", hook_path, voice=VOICE_KO, rate="+6%", pitch="+2Hz", volume="+35%")
+    generate_speech(f"{spoken_hook}!", hook_path, voice=VOICE_KO, rate="+4%", pitch="+2Hz", volume="+50%")
 
-    # 2. 획별 획순 가이드 음성 생성 (한자 데이터베이스의 정확한 획 명칭 적용)
+    # 2. 획별 획순 가이드 음성 생성 (순우리말 서수사 '첫 번째 획!', '두 번째 획!' 적용)
     stroke_names_list = hanzi_info.get("stroke_names", [])
     
     stroke_audios = []
     for order in range(1, hanzi_info["stroke_count"] + 1):
         if stroke_names_list and len(stroke_names_list) >= order:
-            s_text = stroke_names_list[order - 1]
+            raw_t = stroke_names_list[order - 1]
+            s_text = format_korean_stroke_text(raw_t, order)
         else:
-            s_text = f"{order}번째 획!"
+            s_text = f"{KOREAN_ORDINALS.get(order, f'{order}번째')} 획!"
             
         s_path = os.path.join(char_audio_dir, f"stroke_{order}_guide.mp3")
-        generate_speech(s_text, s_path, voice=VOICE_KO, rate="+12%", pitch="+3Hz", volume="+25%")
+        generate_speech(s_text, s_path, voice=VOICE_KO, rate="+10%", pitch="+3Hz", volume="+30%")
         stroke_audios.append(s_path)
 
     # 3. 훈음 파트: [한국어] "날, 일!" + [미국 원어민] "Day, Sun."

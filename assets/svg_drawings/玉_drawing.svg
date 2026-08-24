@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#BDDDF4" d="M13 3H7l-7 9h10z"/><path fill="#5DADEC" d="M36 12l-7-9h-6l3 9z"/><path fill="#4289C1" d="M26 12h10L18 33z"/><path fill="#8CCAF7" d="M10 12H0l18 21zm3-9l-3 9h16l-3-9z"/><path fill="#5DADEC" d="M18 33l-8-21h16z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#E8F5E9"/>
+  <!-- 꿴 금실 줄 (玉의 세로 기둥) -->
+  <line x1="256" y1="40" x2="256" y2="430" stroke="#FFB300" stroke-width="12"/>
+  <!-- 상단 옥구슬 -->
+  <circle cx="256" cy="110" r="50" fill="#2E7D32" stroke="#1B5E20" stroke-width="8"/>
+  <circle cx="240" cy="95" r="16" fill="#81C784"/>
+  <!-- 중단 옥구슬 -->
+  <circle cx="256" cy="230" r="55" fill="#43A047" stroke="#1B5E20" stroke-width="8"/>
+  <circle cx="238" cy="215" r="18" fill="#A5D6A7"/>
+  <!-- 하단 옥구슬 -->
+  <circle cx="256" cy="350" r="50" fill="#2E7D32" stroke="#1B5E20" stroke-width="8"/>
+  <circle cx="240" cy="335" r="16" fill="#81C784"/>
+  <!-- 하단 매듭과 붉은 장식 술 -->
+  <circle cx="256" cy="425" r="14" fill="#D32F2F"/>
+  <path d="M246 440 L240 480 M256 440 L256 485 M266 440 L272 480" stroke="#D32F2F" stroke-width="6"/>
+</svg>

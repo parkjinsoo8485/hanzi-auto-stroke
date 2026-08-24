@@ -1,16 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#E0F7FA"/>
-  <!-- 우물 속 깊은 물 -->
   <circle cx="256" cy="256" r="110" fill="#00ACC1"/>
   <circle cx="256" cy="256" r="80" fill="#00838F"/>
   <circle cx="270" cy="240" r="25" fill="#E0F7FA" opacity="0.5"/>
-  <!-- 우물 정자(井) 나무/석조 틀 -->
-  <!-- 가로 보 2개 -->
   <rect x="60" y="140" width="392" height="52" rx="12" fill="#8D6E63" stroke="#4E342E" stroke-width="10"/>
   <rect x="60" y="320" width="392" height="52" rx="12" fill="#8D6E63" stroke="#4E342E" stroke-width="10"/>
-  <!-- 세로 보 2개 -->
   <rect x="140" y="60" width="52" height="392" rx="12" fill="#A1887F" stroke="#4E342E" stroke-width="10"/>
   <rect x="320" y="60" width="52" height="392" rx="12" fill="#A1887F" stroke="#4E342E" stroke-width="10"/>
-  <!-- 두레박 줄 -->
   <line x1="256" y1="60" x2="256" y2="250" stroke="#FFB300" stroke-width="8" stroke-dasharray="8 8"/>
 </svg>

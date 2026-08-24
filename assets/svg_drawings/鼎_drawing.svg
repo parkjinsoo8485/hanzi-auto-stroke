@@ -1,16 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#ECEFF1"/>
-  <!-- 솥 몸통 귀 (좌우 손잡이) -->
   <path d="M100 130 L100 80 Q100 60 120 60 L140 60 L140 130" fill="none" stroke="#37474F" stroke-width="20"/>
   <path d="M412 130 L412 80 Q412 60 392 60 L372 60 L372 130" fill="none" stroke="#37474F" stroke-width="20"/>
-  <!-- 솥 몸체 -->
   <path d="M90 130 Q90 320 256 330 Q422 320 422 130 Z" fill="#546E7A" stroke="#263238" stroke-width="16"/>
-  <!-- 고대 청동기 무늬 띠 -->
   <rect x="100" y="160" width="312" height="40" rx="8" fill="#78909C"/>
   <circle cx="160" cy="180" r="10" fill="#CFD8DC"/>
   <circle cx="256" cy="180" r="10" fill="#CFD8DC"/>
   <circle cx="352" cy="180" r="10" fill="#CFD8DC"/>
-  <!-- 세 다리 (Tripod legs) -->
   <path d="M130 310 L100 450" stroke="#37474F" stroke-width="32" stroke-linecap="round"/>
   <path d="M256 325 L256 460" stroke="#263238" stroke-width="34" stroke-linecap="round"/>
   <path d="M382 310 L412 450" stroke="#37474F" stroke-width="32" stroke-linecap="round"/>

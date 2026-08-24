@@ -1,11 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#EFEBE9"/>
-  <!-- 도자기 주둥이 -->
   <ellipse cx="256" cy="110" rx="90" ry="24" fill="#8D6E63" stroke="#4E342E" stroke-width="12"/>
   <ellipse cx="256" cy="110" rx="60" ry="14" fill="#3E2723"/>
-  <!-- 불룩한 몸체 -->
   <path d="M170 120 C100 180 80 280 120 380 C140 430 200 450 256 450 C312 450 372 430 392 380 C432 280 412 180 342 120 Z" fill="#6D4C41" stroke="#3E2723" stroke-width="16"/>
-  <!-- 옹기 장식 무늬 -->
   <path d="M120 280 Q256 340 392 280" fill="none" stroke="#A1887F" stroke-width="12" stroke-linecap="round"/>
   <path d="M140 240 Q256 300 372 240" fill="none" stroke="#D7CCC8" stroke-width="8" stroke-dasharray="12 12"/>
 </svg>

@@ -82,7 +82,7 @@ class HanziShortScene(Scene):
         self.play(FadeIn(header_bar, shift=DOWN*0.3), Write(header_content_1), run_time=0.6)
 
         # ==========================================
-        # 2. 그림 픽토그램 제시 & 상형문자 모핑 (0.6s ~ 3.5s)
+        # 2. 그림 픽토그램 제시 & 상형문자 모핑 (여유 있는 생각할 시간 부여)
         # ==========================================
         morph_center = UP * 2.0
 
@@ -92,7 +92,7 @@ class HanziShortScene(Scene):
         with open(drawing_svg_path, "w", encoding="utf-8") as f:
             f.write(self.char_data["drawing_svg"])
 
-        # 원본 일러스트 컬러를 그대로 보존 (단색 파란 상자화 방지)
+        # 원본 일러스트 컬러를 그대로 보존
         pictogram = SVGMobject(drawing_svg_path).scale(2.5).move_to(morph_center)
         
         caption_box = RoundedRectangle(
@@ -108,7 +108,8 @@ class HanziShortScene(Scene):
             Write(caption_text),
             run_time=0.8
         )
-        self.wait(0.7)
+        # 📌 [핵심 개선] 그림을 보고 상형 원리를 충분히 생각하고 유추할 수 있도록 2.0초의 넉넉한 여유 시간 부여
+        self.wait(2.0)
 
         # 코발트 블루 해서체 한자
         full_hanzi_mob = SVGMobject(self.animcjk_info["full_svg_path"]).scale(2.4).move_to(morph_center).set_color("#1D4ED8")
@@ -120,14 +121,16 @@ class HanziShortScene(Scene):
         morph_caption_text = Text(f"➡️ 글자로 완성: 「{char}」", font="Malgun Gothic", font_size=28, color="#FFFFFF", weight=BOLD)
         morph_caption_text.move_to(morph_caption_box.get_center())
 
+        # 상형 그림이 한자로 변하는 모핑 애니메이션
         self.play(
             ReplacementTransform(pictogram, full_hanzi_mob),
             ReplacementTransform(caption_box, morph_caption_box),
             ReplacementTransform(caption_text, morph_caption_text),
-            run_time=1.2
+            run_time=1.4
         )
-        self.play(Indicate(full_hanzi_mob, scale_factor=1.06, color="#2563EB"), run_time=0.5)
-        self.wait(0.3)
+        self.play(Indicate(full_hanzi_mob, scale_factor=1.06, color="#2563EB"), run_time=0.6)
+        # 📌 완성된 한자를 충분히 인지할 수 있도록 1.0초 감상 시간 부여
+        self.wait(1.0)
 
         # 헤더를 획순 정보(부수 / 총 N획 / 한자 훈음)로 매끄럽게 전환
         sub_header_txt_2 = Text(f"부수 {char}  |  총 {total_strokes}획", font="Malgun Gothic", font_size=24, color="#94A3B8", weight=BOLD)
@@ -139,7 +142,7 @@ class HanziShortScene(Scene):
             FadeOut(morph_caption_box),
             FadeOut(morph_caption_text),
             ReplacementTransform(header_content_1, header_content_2),
-            run_time=0.4
+            run_time=0.5
         )
 
         # ==========================================
