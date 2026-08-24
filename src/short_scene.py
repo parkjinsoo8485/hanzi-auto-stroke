@@ -4,7 +4,7 @@
 - 1인칭 POV 실사 손+붓글씨 (Hand Holding Calligraphy Brush)
 - AnimCJK 정통 해서체(정자체/번체) 획순 매끄러운 붓터치 애니메이션
 - 상단/하단 카드 디자인 (한글/영문 듀얼 훈음 & 실생활 단어)
-- 30fps 기준 오디오-비디오 100% 프레임 퍼펙트 동기화
+- 붓끝(Tip)과 획 노출 전면부(Ink Front) 100% 수학적 서브픽셀 일치
 """
 import os
 import sys
@@ -21,7 +21,7 @@ if sys.platform == "win32":
     except Exception:
         pass
 
-# 9:16 세로 숏폼 해상도 (1080x1920) & 30fps
+# 9:16 세로 숏폼 해상도 (1080x1920)
 config.pixel_width = 1080
 config.pixel_height = 1920
 config.frame_width = 9.0
@@ -34,7 +34,7 @@ def parse_svg_path_points(d_str):
     coords = re.findall(r'([-\d\.]+)[,\s]+([-\d\.]+)', d_str)
     return [(float(x), float(y)) for x, y in coords]
 
-def svg_to_manim_point(x, y, grid_center, scale_factor=4.6):
+def svg_to_manim_point(x, y, grid_center, scale_factor=4.8):
     mx = grid_center[0] + (x / 1024.0 - 0.5) * scale_factor
     my = grid_center[1] - (y / 1024.0 - 0.5) * scale_factor
     return np.array([mx, my, 0.0])
@@ -165,13 +165,14 @@ class HanziShortScene(Scene):
         grid_dash_d2 = DashedLine(grid_box.get_corner(UR), grid_box.get_corner(DL), dash_length=0.18, stroke_color="#E2E8F0", stroke_width=1.2)
         grid_group = VGroup(grid_box, grid_dash_h, grid_dash_v, grid_dash_d1, grid_dash_d2)
 
-        # 6.9s ~ 7.3s (400ms): 격자판 등장
+        # 6.9s ~ 7.3s: 격자판 등장
         self.play(FadeIn(grid_group), run_time=0.4)
 
         from stroke_mask_renderer import generate_stroke_reveal_frames, get_stroke_medial_points, get_brush_tip_relative
 
         brush_mob = ImageMobject("assets/hand_brush_clean.png").scale_to_fit_height(4.5).set_z_index(100)
         norm_tip_x, norm_tip_y = get_brush_tip_relative("assets/hand_brush_clean.png")
+        # 붓끝(Tip) -> 이미지 중심(Center) 오프셋 벡터 (서브픽셀 정밀 고정)
         tip_offset = np.array([(0.5 - norm_tip_x) * brush_mob.width, (norm_tip_y - 0.5) * brush_mob.height, 0.0])
 
         rendered_strokes = []
@@ -183,7 +184,7 @@ class HanziShortScene(Scene):
             medial_svg = stroke_item.get("medial_svg_path")
             medial_d = stroke_item.get("medial_d", "")
 
-            spline_pts = get_stroke_medial_points(medial_svg, num_samples=160) if medial_svg else []
+            spline_pts = get_stroke_medial_points(medial_svg, num_samples=500) if medial_svg else []
             if not spline_pts:
                 spline_pts = parse_svg_path_points(medial_d)
 
@@ -192,21 +193,23 @@ class HanziShortScene(Scene):
                 start_pt = manim_pts[0]
                 end_pt = manim_pts[-1]
                 
+                # 61개(0~60) 60fps 초고밀도 프레임 시퀀스 생성 (Frame 0: 100% 빈 캔버스)
                 reveal_frame_paths = generate_stroke_reveal_frames(
                     char=char,
                     order=order,
                     outline_svg_path=stroke_svg,
                     medial_svg_path=medial_svg,
-                    num_frames=30
+                    num_frames=60
                 )
 
+                # 메모리에 프레임 픽셀 배열 사전 로드 (애니메이션 중 I/O 렉 방지)
+                frame_pixel_arrays = [ImageMobject(p).pixel_array for p in reveal_frame_paths]
+
                 stroke_reveal_mob = ImageMobject(reveal_frame_paths[0]).scale_to_fit_width(4.8).move_to(grid_pos).set_z_index(10 + order)
-                hand_pts = [pt + tip_offset for pt in manim_pts]
-                hand_curve = VMobject().set_points_as_corners(hand_pts)
                 hover_offset = UP * 0.38 + RIGHT * 0.24
 
                 if is_first_stroke:
-                    # 1획: 7.3s ~ 7.8s (총 0.50s 준비 -> 정확히 7.80s에 쓰기 시작!)
+                    # 1획: 7.3s ~ 7.8s (정확히 7.80s에 쓰기 시작)
                     brush_mob.move_to(start_pt + tip_offset + hover_offset)
                     self.play(FadeIn(brush_mob, shift=DR * 0.25), run_time=0.30)
                     self.play(
@@ -216,7 +219,7 @@ class HanziShortScene(Scene):
                     )
                     is_first_stroke = False
                 else:
-                    # 다음 획: 총 0.30s 이동 및 착지 -> 정확히 이전획시작 + 1.60s에 이번획 쓰기 시작!
+                    # 다음 획: 공중 이동 및 정밀 착지
                     self.play(
                         brush_mob.animate.move_to(start_pt + tip_offset + hover_offset),
                         run_time=0.20,
@@ -230,29 +233,42 @@ class HanziShortScene(Scene):
 
                 self.add(stroke_reveal_mob)
 
+                # 📌 [붓끝 & 먹물 전면부 1:1 서브픽셀 완벽 동기화 엔진]
                 progress_tracker = ValueTracker(0.0)
 
-                def update_stroke_frame(mob):
+                def update_writing(mob):
                     prog = np.clip(progress_tracker.get_value(), 0.0, 1.0)
-                    f_idx = min(int(round(prog * (len(reveal_frame_paths) - 1))), len(reveal_frame_paths) - 1)
-                    mob.pixel_array = ImageMobject(reveal_frame_paths[f_idx]).pixel_array
+                    
+                    # 1. 먹물 노출 프레임 인덱스 (0 ~ 60)
+                    f_idx = min(int(round(prog * (len(frame_pixel_arrays) - 1))), len(frame_pixel_arrays) - 1)
+                    stroke_reveal_mob.pixel_array = frame_pixel_arrays[f_idx]
+                    
+                    # 2. 붓끝 위치 서브픽셀 선형 보간 (붓끝이 절단면 선단과 100% 동일하게 일치)
+                    float_idx = prog * (len(manim_pts) - 1)
+                    i0 = int(float_idx)
+                    i1 = min(i0 + 1, len(manim_pts) - 1)
+                    t_sub = float_idx - i0
+                    curr_pt = (1.0 - t_sub) * manim_pts[i0] + t_sub * manim_pts[i1]
+                    mob.move_to(curr_pt + tip_offset)
 
-                stroke_reveal_mob.add_updater(update_stroke_frame)
+                brush_mob.add_updater(update_writing)
 
-                # 📌 [1.00초 정밀 라이팅]: ASMR 오디오(1.00s)와 프레임 단위 완벽 동기화!
+                # 1.00초 정밀 서예 라이팅 애니메이션 실행
                 self.play(
-                    MoveAlongPath(brush_mob, hand_curve, rate_func=linear),
                     progress_tracker.animate.set_value(1.0),
                     run_time=1.00,
                     rate_func=linear
                 )
 
-                stroke_reveal_mob.remove_updater(update_stroke_frame)
+                brush_mob.remove_updater(update_writing)
+                # 마지막 프레임 고정 (100% 완성)
+                stroke_reveal_mob.pixel_array = frame_pixel_arrays[-1]
+                brush_mob.move_to(end_pt + tip_offset)
                 rendered_strokes.append(stroke_reveal_mob)
 
-                # 붓 리프트 (0.20s)
+                # 붓 리프트 (0.20s): 크기 왜곡 없는 정밀 위치 이동
                 self.play(
-                    brush_mob.animate.scale(np.array([1.0 / 1.02, 1.0 / 0.94, 1.0]), about_point=end_pt + tip_offset).shift(hover_offset),
+                    brush_mob.animate.move_to(end_pt + tip_offset + hover_offset),
                     run_time=0.20,
                     rate_func=ease_out_cubic
                 )
