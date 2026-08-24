@@ -56,8 +56,10 @@ if __name__ == "__main__":
 
         hun_eum_name = HANZI_DATABASE[c]['hun_eum'].replace(' ', '_')
         expected_output = os.path.join("output", f"shorts_{c}_{hun_eum_name}.mp4")
-        if not args.force and os.path.exists(expected_output):
-            print(f"⏩ [이미 생성됨] {expected_output} 파일이 이미 존재하므로 건너뜁니다. (--force 시 재생성)")
+        
+        # 이어하기(Resume) 체크: 파일이 존재하고 크기가 정상(10KB 이상)인 경우 자동 건너뜀
+        if not args.force and os.path.exists(expected_output) and os.path.getsize(expected_output) > 10240:
+            print(f"⏩ [이미 제작 완료] {expected_output} ({os.path.getsize(expected_output) / 1024 / 1024:.1f}MB) -> 건너뜁니다.")
             success_list.append(c)
             continue
 
