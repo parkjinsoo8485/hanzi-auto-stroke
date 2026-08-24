@@ -207,47 +207,45 @@ class HanziShortScene(Scene):
                 hover_offset = UP * 0.38 + RIGHT * 0.24
 
                 if is_first_stroke:
-                    # 1획: 상공 대기 위치에서 부드럽게 등장 (붓이 살짝 세워진 공중 상태)
+                    # 1획: 상공 대기 위치에서 신속하고 부드럽게 등장
                     brush_mob.move_to(start_pt + tip_offset + hover_offset)
-                    self.play(FadeIn(brush_mob, shift=DR * 0.35), run_time=0.35)
+                    self.play(FadeIn(brush_mob, shift=DR * 0.25), run_time=0.20)
 
-                    # [기필/착지 1단계]: 붓끝이 지면 시작점에 정밀 하강하여 접촉 (Touchdown)
+                    # [기필/착지 1단계]: 붓끝이 지면 시작점에 정밀 하강하여 접촉
                     self.play(
                         brush_mob.animate.move_to(start_pt + tip_offset),
-                        run_time=0.20,
-                        rate_func=ease_out_quad
-                    )
-
-                    # [돈필/지면 안착 2단계]: 붓끝(Tip)을 지면에 고정하고 탄력적으로 지면에 눌림
-                    self.play(
-                        brush_mob.animate.scale(np.array([1.02, 0.94, 1.0]), about_point=start_pt + tip_offset),
                         run_time=0.12,
-                        rate_func=ease_in_out_quad
-                    )
-                    self.wait(0.02)
-                    is_first_stroke = False
-                else:
-                    # 이전 획 끝에서 공중으로 떠서 이번 획 상공으로 호를 그리며 이동
-                    self.play(
-                        brush_mob.animate.move_to(start_pt + tip_offset + hover_offset),
-                        run_time=0.28,
-                        rate_func=ease_in_out_quad
-                    )
-
-                    # [기필/착지 1단계]: 붓끝이 지면 시작점으로 정밀 하강
-                    self.play(
-                        brush_mob.animate.move_to(start_pt + tip_offset),
-                        run_time=0.20,
                         rate_func=ease_out_quad
                     )
 
                     # [돈필/지면 안착 2단계]: 붓끝 고정 상태에서 탄성 누름
                     self.play(
                         brush_mob.animate.scale(np.array([1.02, 0.94, 1.0]), about_point=start_pt + tip_offset),
-                        run_time=0.12,
+                        run_time=0.08,
                         rate_func=ease_in_out_quad
                     )
-                    self.wait(0.02)
+                    is_first_stroke = False
+                else:
+                    # 이전 획 끝에서 공중으로 떠서 이번 획 상공으로 호를 그리며 쾌속 이동
+                    self.play(
+                        brush_mob.animate.move_to(start_pt + tip_offset + hover_offset),
+                        run_time=0.16,
+                        rate_func=ease_in_out_quad
+                    )
+
+                    # [기필/착지 1단계]: 붓끝이 지면 시작점으로 정밀 하강
+                    self.play(
+                        brush_mob.animate.move_to(start_pt + tip_offset),
+                        run_time=0.10,
+                        rate_func=ease_out_quad
+                    )
+
+                    # [돈필/지면 안착 2단계]: 붓끝 탄성 누름
+                    self.play(
+                        brush_mob.animate.scale(np.array([1.02, 0.94, 1.0]), about_point=start_pt + tip_offset),
+                        run_time=0.06,
+                        rate_func=ease_in_out_quad
+                    )
 
                 self.add(stroke_reveal_mob)
 
@@ -261,29 +259,29 @@ class HanziShortScene(Scene):
 
                 stroke_reveal_mob.add_updater(update_stroke_frame)
 
-                # [행필]: 붓 이동 & 해서체 먹물 채우기 완벽 동기화 실행
+                # 📌 [핵심 개선] 붓 써지는 속도를 자연스럽고 우아한 호흡(0.95s)으로 조절하여 서예의 깊이감과 ASMR 몰입감 극대화
                 self.play(
                     MoveAlongPath(brush_mob, hand_curve, rate_func=linear),
                     progress_tracker.animate.set_value(1.0),
-                    run_time=1.35,
+                    run_time=0.95,
                     rate_func=linear
                 )
 
                 stroke_reveal_mob.remove_updater(update_stroke_frame)
                 rendered_strokes.append(stroke_reveal_mob)
 
-                # [수필/회봉 & 도약]: 획 종료 후 붓 탄성 복원 및 공중으로 살짝 들어올림 (Lift)
+                # [수필/회봉 & 도약]: 획 종료 후 붓 탄성 복원 및 부드러운 리프트
                 self.play(
                     brush_mob.animate.scale(np.array([1.0 / 1.02, 1.0 / 0.94, 1.0]), about_point=end_pt + tip_offset).shift(hover_offset),
-                    run_time=0.18,
+                    run_time=0.12,
                     rate_func=ease_out_cubic
                 )
             else:
                 stroke_mob = SVGMobject(stroke_svg).scale(2.4).move_to(grid_pos).set_color("#1D4ED8")
-                self.play(FadeIn(stroke_mob, run_time=1.2), run_time=1.2)
+                self.play(FadeIn(stroke_mob, run_time=0.8), run_time=0.8)
                 rendered_strokes.append(stroke_mob)
 
-            self.wait(0.06)
+            self.wait(0.04)
 
         # 붓글씨 완성 후 손 퇴장 (자연스럽게 우하단으로 퇴장)
         self.play(FadeOut(brush_mob, shift=DR*0.8), run_time=0.5)

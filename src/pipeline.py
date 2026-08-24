@@ -131,44 +131,52 @@ def run_pipeline(char="大", quality="m", preview=False):
     mix_inputs = ["[a_hook]"]
 
     input_idx = 2
-    stroke_start_time = 7300  # 7.3초 (생각할 여유 시간 2초 및 자연스러운 모핑 감상 시간 반영)
-    stroke_interval = 2200    # 획당 약 2.2초 간격
+    # 📌 [100% 완벽 동기화] 붓끝이 화선지에 닿아 획을 긋는 순간(7700ms)부터 
+    # 획당 0.95초 동안 사각사각 화선지 ASMR 사운드가 1:1 완벽하게 일치되어 재생!
+    stroke_start_time = 7700  # 7.70초: 1획 붓끝 착지 및 이동 시작 순간
+    stroke_interval = 1430    # 1.43초: 획간 완벽한 물리적 시간차 (0.95s 쓰기 + 0.16s 수필 + 0.32s 다음 획 이동/착지)
+    num_strokes = len(HANZI_DATABASE[char].get("stroke_names", [])) if "stroke_names" in HANZI_DATABASE[char] else HANZI_DATABASE[char]["stroke_count"]
     
-    # 획별 가이드 음성 추가 (획순 쓰는 동안 거슬리는 마찰음/노이즈 일체 제거)
-    for s_idx, s_path in enumerate(audio_paths["strokes"]):
-        # 가이드 음성 (순우리말 첫 번째, 두 번째... 볼륨 1.8배로 또렷하게)
-        inputs.extend(["-i", s_path.replace("\\", "/")])
+    sfx_dir = os.path.join("assets", "audio", "sfx")
+    sfx_files = sorted([os.path.join(sfx_dir, f) for f in os.listdir(sfx_dir) if f.endswith(".wav")]) if os.path.exists(sfx_dir) else [sfx_path]
+    if not sfx_files:
+        sfx_files = [sfx_path]
+
+    for s_idx in range(num_strokes):
+        current_stroke_sfx = sfx_files[s_idx % len(sfx_files)]
+        inputs.extend(["-i", current_stroke_sfx.replace("\\", "/")])
         delay_ms = stroke_start_time + s_idx * stroke_interval
-        filter_parts.append(f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume=1.8[a_s{s_idx}]")
-        mix_inputs.append(f"[a_s{s_idx}]")
+        # 획을 그릴 때 편안하고 은은하게 들리도록 자연스러운 볼륨(1.0배)으로 믹싱
+        filter_parts.append(f"[{input_idx}:a]adelay={delay_ms}|{delay_ms},volume=1.0[a_sfx{s_idx}]")
+        mix_inputs.append(f"[a_sfx{s_idx}]")
         input_idx += 1
 
-    # 훈음 오디오 (획 작성 종료 후)
-    huneum_time = stroke_start_time + len(audio_paths["strokes"]) * stroke_interval + 400
+    # 훈음 오디오 (마지막 획 작성 완료 + 손 퇴장 + 플래시 + 훈음 카드 등장 직후)
+    last_stroke_start = stroke_start_time + (num_strokes - 1) * stroke_interval
+    huneum_time = last_stroke_start + 3410  # 0.95s(쓰기) + 0.16s(수필) + 0.5s(퇴장) + 0.7s(플래시) + 0.3s + 0.5s(카드) + 0.3s
     huneum_dur_ms = int(get_audio_duration(audio_paths["huneum"]) * 1000)
     inputs.extend(["-i", audio_paths["huneum"].replace("\\", "/")])
     filter_parts.append(f"[{input_idx}:a]adelay={huneum_time}|{huneum_time},volume=1.8[a_huneum]")
     mix_inputs.append("[a_huneum]")
     input_idx += 1
 
-    # 실생활 단어 오디오 (훈음 오디오 재생이 완전히 끝난 후 + 600ms 여유 버퍼 -> 겹침 원천 방지)
-    word_time = huneum_time + huneum_dur_ms + 600
+    # 실생활 단어 오디오 (훈음 오디오 재생 완료 후 + 450ms 여유 버퍼)
+    word_time = huneum_time + huneum_dur_ms + 450
     inputs.extend(["-i", audio_paths["example_word"].replace("\\", "/")])
     filter_parts.append(f"[{input_idx}:a]adelay={word_time}|{word_time},volume=1.8[a_word]")
     mix_inputs.append("[a_word]")
     input_idx += 1
 
     # 동양풍 한자 서예 훅 BGM 추가
-    # 📌 [핵심 개선] 인트로 상형 유추 및 모핑 구간(0~6.8s)에 BGM 재생 후,
-    # 실제 한자 획순 쓰기 구간(7.1s ~ 획 작성 완료 시점)에는 배경음/BGM을 완전히 100% 무음 처리!
+    # 📌 획순 작성 ASMR 구간(7.4s ~ 획 작성 및 손 퇴장 시점)에는 BGM을 완전 무음 처리하여 붓글씨 ASMR에 100% 몰입!
     inputs.extend(["-i", bgm_path.replace("\\", "/")])
-    writing_start_s = 7.1
-    writing_end_s = max(round(huneum_time / 1000.0, 2), 8.0)
+    writing_start_s = 7.4
+    writing_end_s = max(round((last_stroke_start + 1150) / 1000.0, 2), 8.0)
     bgm_filter = (
-        f"[{input_idx}:a]volume='if(lt(t,6.8),0.18,"
-        f"if(lt(t,{writing_start_s}),0.18*({writing_start_s}-t)/0.3,"
+        f"[{input_idx}:a]volume='if(lt(t,7.0),0.18,"
+        f"if(lt(t,{writing_start_s}),0.18*({writing_start_s}-t)/0.4,"
         f"if(lt(t,{writing_end_s}),0,"
-        f"if(lt(t,{writing_end_s}+0.6),0.22*(t-{writing_end_s})/0.6,0.22))))':eval=frame[a_bgm]"
+        f"if(lt(t,{writing_end_s}+0.5),0.22*(t-{writing_end_s})/0.5,0.22))))':eval=frame[a_bgm]"
     )
     filter_parts.append(bgm_filter)
     mix_inputs.append("[a_bgm]")

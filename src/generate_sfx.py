@@ -1,32 +1,59 @@
 """
-실제 화선지 붓글씨 마찰음(Authentic Calligraphy Paper Stroke SFX) 관리 모듈
+고화질 실사 서예 화선지 붓글씨 마찰음(Authentic Calligraphy Brush ASMR SFX) 생성 모듈
+- 획 애니메이션 시간(0.95s)과 100% 동기화
 """
 import os
 import wave
 import numpy as np
 
-def generate_brush_stroke_sfx(output_path="assets/audio/brush_stroke.wav", duration=1.5, sample_rate=44100):
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
-        return output_path
+SAMPLE_RATE = 44100
 
+def generate_brush_stroke_sfx(output_path="assets/audio/brush_stroke.wav", duration=0.95, sample_rate=44100):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     num_samples = int(duration * sample_rate)
-    # 부드럽고 자연스러운 화선지 붓 스침 질감 합성 (저역 통과 필터링)
-    white_noise = np.random.uniform(-1, 1, num_samples)
-    window_size = 60
-    smooth_noise = np.convolve(white_noise, np.ones(window_size)/window_size, mode='same')
+    t = np.linspace(0, duration, num_samples, endpoint=False)
     
-    t = np.linspace(0, 1, num_samples)
-    envelope = np.sin(np.pi * (t ** 0.8)) ** 1.5
-    audio = smooth_noise * envelope * 0.40
-    audio_int16 = (audio * 32767).astype(np.int16)
-    
-    with wave.open(output_path, 'wb') as wav_file:
-        wav_file.setnchannels(1)
-        wav_file.setsampwidth(2)
-        wav_file.setframerate(sample_rate)
-        wav_file.writeframes(audio_int16.tobytes())
-        
+    # 붓 착지 틱
+    attack_samples = int(0.05 * sample_rate)
+    at = np.linspace(0, 0.05, attack_samples, endpoint=False)
+    touch_click = np.sin(2 * np.pi * 110.0 * at) * np.exp(-at * 90.0) * 0.12
+    touch_noise = np.random.uniform(-0.12, 0.12, attack_samples) * np.exp(-at * 120.0)
+    touch_layer = np.zeros(num_samples)
+    touch_layer[:attack_samples] = touch_click + touch_noise
+
+    # 화선지 결 마찰음
+    raw_noise = np.random.uniform(-1.0, 1.0, num_samples)
+    w1, w2 = 10, 42
+    c1 = np.convolve(raw_noise, np.ones(w1)/w1, mode='same')
+    c2 = np.convolve(raw_noise, np.ones(w2)/w2, mode='same')
+    f_high = (c1 - c2) * 2.5
+    env = (np.sin(np.pi * (t / duration) ** 0.75) ** 1.6)
+    glide = f_high * env
+
+    # 부드러운 붓 뗌
+    release_samples = int(0.05 * sample_rate)
+    rt = np.linspace(0, 0.05, release_samples, endpoint=False)
+    lift_click = np.sin(2 * np.pi * 180.0 * rt) * np.exp(-rt * 100.0) * 0.08
+
+    full_audio = (touch_layer * 0.30) + glide
+    if num_samples > release_samples:
+        full_audio[-release_samples:] += lift_click
+
+    fi = int(0.04 * sample_rate)
+    fo = int(0.06 * sample_rate)
+    full_audio[:fi] *= np.linspace(0, 1, fi)
+    full_audio[-fo:] *= np.linspace(1, 0, fo)
+
+    max_val = np.max(np.abs(full_audio))
+    if max_val > 0:
+        full_audio = (full_audio / max_val) * 0.55
+
+    audio_int16 = (full_audio * 32767).astype(np.int16)
+    with wave.open(output_path, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sample_rate)
+        wf.writeframes(audio_int16.tobytes())
     return output_path
 
 if __name__ == "__main__":
