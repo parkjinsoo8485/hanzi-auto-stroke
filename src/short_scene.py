@@ -45,26 +45,28 @@ class HanziShortScene(Scene):
         from hanzi_data import HANZI_DATABASE
         from animcjk_loader import parse_animcjk_strokes
         
-        char_key = "大"
+        # 환경변수 HANZI_CHAR 또는 current_scene_meta.json에서 타깃 한자 확인
+        env_char = os.environ.get("HANZI_CHAR", "").strip()
+        char_key = env_char if env_char else "大"
         self.huneum_dur = 3.2
         self.word_dur = 4.5
         
-        meta_file = "assets/current_scene_meta.json"
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        meta_file = os.path.join(project_root, "assets", "current_scene_meta.json")
         if os.path.exists(meta_file):
             try:
                 with open(meta_file, "r", encoding="utf-8") as f:
                     meta = json.load(f)
-                    char_key = meta.get("char", "大")
+                    if not env_char:
+                        char_key = meta.get("char", "大")
                     self.huneum_dur = float(meta.get("huneum_duration", 3.2))
                     self.word_dur = float(meta.get("word_duration", 4.5))
             except Exception:
-                char_key = os.environ.get("HANZI_CHAR", "大")
-        else:
-            char_key = os.environ.get("HANZI_CHAR", "大")
+                pass
 
         self.char_data = HANZI_DATABASE.get(char_key, HANZI_DATABASE["大"])
         self.animcjk_info = parse_animcjk_strokes(char_key)
-        self.hand_brush_path = "assets/hand_brush_clean.png"
+        self.hand_brush_path = os.path.join(project_root, "assets", "hand_brush_clean.png")
 
     def construct(self):
         char = self.char_data["char"]
@@ -96,8 +98,9 @@ class HanziShortScene(Scene):
         clean_char = char.replace("/", "_")
         drawing_svg_path = f"assets/svg_drawings/{clean_char}_drawing.svg"
         os.makedirs(os.path.dirname(drawing_svg_path), exist_ok=True)
-        with open(drawing_svg_path, "w", encoding="utf-8") as f:
-            f.write(self.char_data["drawing_svg"])
+        if not os.path.exists(drawing_svg_path) or os.path.getsize(drawing_svg_path) < 10:
+            with open(drawing_svg_path, "w", encoding="utf-8") as f:
+                f.write(self.char_data["drawing_svg"])
 
         # 원본 일러스트 컬러 보존
         pictogram = SVGMobject(drawing_svg_path).scale(2.5).move_to(morph_center)

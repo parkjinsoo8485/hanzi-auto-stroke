@@ -85,25 +85,29 @@ def run_pipeline(char="大", quality="m", preview=False):
     # 3. Manim 렌더링
     print(f"\n[Step 3] Manim 9:16 비디오 렌더링 중 (품질: {quality})...")
     quality_flag = f"-q{quality}"
-    scene_file = os.path.join(os.path.dirname(__file__), "short_scene.py")
+    scene_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "short_scene.py"))
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     
-    venv_python = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".venv", "Scripts", "python.exe"))
+    venv_python = os.path.abspath(os.path.join(project_root, ".venv", "Scripts", "python.exe"))
     if os.path.exists(venv_python):
         python_exe = venv_python
     else:
         python_exe = sys.executable
 
+    # 대상 한자 전용 출력 파일명 지정 (Manim -o 옵션)
+    custom_output_name = f"manim_rendered_{ord(char)}_{char}"
     manim_cmd = [
         python_exe, "-m", "manim",
         scene_file, "HanziShortScene",
         quality_flag,
+        "-o", custom_output_name,
         "--disable_caching"
     ]
     
     env = os.environ.copy()
     env["HANZI_CHAR"] = char
     print(f"실행 명령: {' '.join(manim_cmd)} (한자: {char})")
-    result = subprocess.run(manim_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", env=env)
+    result = subprocess.run(manim_cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", env=env, cwd=project_root)
     
     if result.returncode != 0:
         print(f"[Error] Manim 렌더링 실패:\n{result.stderr}\n{result.stdout}")
@@ -111,14 +115,14 @@ def run_pipeline(char="大", quality="m", preview=False):
     else:
         print("[Manim] 렌더링 완료!")
 
-    # 4. 가장 최근에 렌더링된 비디오 파일 찾기 (partial_movie_files 제외)
-    media_dir = "media/videos/short_scene"
+    # 4. 방금 렌더링된 비디오 파일 찾기 (custom_output_name 기반)
+    media_dir = os.path.join(project_root, "media", "videos", "short_scene")
     candidate_mp4s = []
     for root, dirs, files in os.walk(media_dir):
         if "partial_movie_files" in root:
             continue
         for f in files:
-            if f.endswith(".mp4") and "HanziShortScene" in f:
+            if f.endswith(".mp4") and (custom_output_name in f or "HanziShortScene" in f):
                 full_p = os.path.join(root, f)
                 candidate_mp4s.append(full_p)
     
