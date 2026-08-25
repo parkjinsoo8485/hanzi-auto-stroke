@@ -33,7 +33,20 @@ def run_batch(quality="m", start_idx=0, limit=None):
     success_count = 0
     fail_list = []
     
+    output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "output"))
+    
     for i, char in enumerate(target_chars, 1):
+        meta = HANZI_DATABASE.get(char, {})
+        hun_eum = meta.get("hun_eum", "").replace(" ", "_")
+        expected_filename = f"shorts_{char}_{hun_eum}.mp4"
+        expected_filepath = os.path.join(output_dir, expected_filename)
+        
+        # 이미 output 폴더에 완성된 파일이 있으면 건너뛰기 (자동 이어하기)
+        if os.path.exists(expected_filepath) and os.path.getsize(expected_filepath) > 100000:
+            print(f"\n[{i}/{total}] ⏩ '{char}' ({hun_eum}) 이미 완성된 파일이 있어 건너뜁니다: {expected_filename}")
+            success_count += 1
+            continue
+
         print(f"\n[{i}/{total}] >>> '{char}' 숏폼 생성 진행 중...")
         try:
             res = run_pipeline(char=char, quality=quality)
