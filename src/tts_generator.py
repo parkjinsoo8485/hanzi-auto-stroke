@@ -109,7 +109,7 @@ def format_korean_stroke_text(raw_text: str, order: int) -> str:
     return f"{KOREAN_ORDINALS.get(order, f'{order}번째')} 획!"
 
 def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
-    """한자 항목에 필요한 한국어/원어민 영어 듀얼 오디오 및 획별 가이드 음성 일괄 생성"""
+    """한자 항목에 필요한 한국어/원어민 영어 듀얼 오디오 생성 (획별 '첫 번째, 두 번째' 음성 생략 버전)"""
     char = hanzi_info["char"]
     char_audio_dir = os.path.join(base_dir, f"char_{char}")
     os.makedirs(char_audio_dir, exist_ok=True)
@@ -119,22 +119,7 @@ def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
     spoken_hook = clean_hook_text(hanzi_info['sound_desc'])
     generate_speech(f"{spoken_hook}!", hook_path, voice=VOICE_KO, rate="+4%", pitch="+2Hz", volume="+50%")
 
-    # 2. 획별 획순 가이드 음성 생성 (순우리말 서수사 '첫 번째 획!', '두 번째 획!' 적용)
-    stroke_names_list = hanzi_info.get("stroke_names", [])
-    
-    stroke_audios = []
-    for order in range(1, hanzi_info["stroke_count"] + 1):
-        if stroke_names_list and len(stroke_names_list) >= order:
-            raw_t = stroke_names_list[order - 1]
-            s_text = format_korean_stroke_text(raw_t, order)
-        else:
-            s_text = f"{KOREAN_ORDINALS.get(order, f'{order}번째')} 획!"
-            
-        s_path = os.path.join(char_audio_dir, f"stroke_{order}_guide.mp3")
-        generate_speech(s_text, s_path, voice=VOICE_KO, rate="+10%", pitch="+3Hz", volume="+30%")
-        stroke_audios.append(s_path)
-
-    # 3. 훈음 파트: [한국어] "날, 일!" + [미국 원어민] "Day, Sun."
+    # 2. 훈음 파트: [한국어] "날, 일!" + [미국 원어민] "Day, Sun."
     huneum_ko_path = os.path.join(char_audio_dir, "huneum_ko.mp3")
     huneum_en_path = os.path.join(char_audio_dir, "huneum_en.mp3")
     combined_huneum_path = os.path.join(char_audio_dir, "huneum_combined.mp3")
@@ -202,7 +187,7 @@ def prepare_hanzi_audios(hanzi_info: dict, base_dir: str = "assets/audio"):
 
     return {
         "hook": hook_path,
-        "strokes": stroke_audios,
+        "strokes": [],
         "huneum": combined_huneum_path if os.path.exists(combined_huneum_path) else huneum_ko_path,
         "example_word": combined_word_path if os.path.exists(combined_word_path) else word_ko_path
     }
