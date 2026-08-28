@@ -1,1 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#269" d="M32 7H4c-2.209 0-4 1.791-4 4v15c0 2.209 1.791 4 4 4h11.416c.52.596 1.477 1 2.584 1s2.065-.404 2.584-1H32c2.209 0 4-1.791 4-4V11c0-2.209-1.791-4-4-4z"/><path fill="#292F33" d="M20 27c0 1.104-.896 2-2 2s-2-.896-2-2V9c0-1.104.896-2 2-2s2 .896 2 2v18z"/><path fill="#99AAB5" d="M18 26c0 1.104-.896 2-2 2H4c-1.104 0-2-.896-2-2V8c0-1.104.896-2 2-2h12c1.104 0 2 .896 2 2v18z"/><path fill="#E1E8ED" d="M18 26c-.999-1.998-3.657-2-4-2-2 0-5 2-8 2-1 0-2-.896-2-2V8c0-1.104 1-2 2-2 3.255 0 6-2 8-2 3 0 4 1.896 4 3v19z"/><path fill="#99AAB5" d="M34 26c0 1.104-.896 2-2 2H20c-1.104 0-2-.896-2-2V8c0-1.104.896-2 2-2h12c1.104 0 2 .896 2 2v18z"/><path fill="#CCD6DD" d="M18 26c.999-1.998 3.657-2 4-2 2 0 5 2 8 2 1 0 2-.896 2-2V8c0-1.104-1-2-2-2-3.256 0-6-2-8-2-3 0-4 1.896-4 3v19z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#FFF8E1"/>
+  <!-- 5개의 나란한 대나무 죽간 살 (冊 상형 형태 100% 일치) -->
+  <rect x="90" y="60" width="45" height="392" rx="10" fill="#FFE082" stroke="#FF8F00" stroke-width="8"/>
+  <rect x="160" y="60" width="45" height="392" rx="10" fill="#FFE082" stroke="#FF8F00" stroke-width="8"/>
+  <rect x="233" y="60" width="45" height="392" rx="10" fill="#FFE082" stroke="#FF8F00" stroke-width="8"/>
+  <rect x="306" y="60" width="45" height="392" rx="10" fill="#FFE082" stroke="#FF8F00" stroke-width="8"/>
+  <rect x="376" y="60" width="45" height="392" rx="10" fill="#FFE082" stroke="#FF8F00" stroke-width="8"/>
+  <!-- 죽간 글씨 먹선 -->
+  <line x1="112" y1="120" x2="112" y2="380" stroke="#5D4037" stroke-width="6" stroke-dasharray="16 16"/>
+  <line x1="182" y1="120" x2="182" y2="380" stroke="#5D4037" stroke-width="6" stroke-dasharray="16 16"/>
+  <line x1="256" y1="120" x2="256" y2="380" stroke="#5D4037" stroke-width="6" stroke-dasharray="16 16"/>
+  <line x1="328" y1="120" x2="328" y2="380" stroke="#5D4037" stroke-width="6" stroke-dasharray="16 16"/>
+  <line x1="398" y1="120" x2="398" y2="380" stroke="#5D4037" stroke-width="6" stroke-dasharray="16 16"/>
+  <!-- 상하로 관통하여 묶은 붉은 가죽 끈 (冊의 가로선) -->
+  <line x1="60" y1="170" x2="452" y2="170" stroke="#D32F2F" stroke-width="16" stroke-linecap="round"/>
+  <line x1="60" y1="340" x2="452" y2="340" stroke="#D32F2F" stroke-width="16" stroke-linecap="round"/>
+</svg>
