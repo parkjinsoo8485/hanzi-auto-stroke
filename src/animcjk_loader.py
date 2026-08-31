@@ -9,9 +9,10 @@ ANIMCJK_CACHE_DIR = "assets/animcjk_cache"
 SVG_HANZI_DIR = "assets/svg_hanzi"
 
 def fetch_animcjk_svg(char: str) -> str:
-    """AnimCJK 한국 한자(svgsKo) 또는 번체(svgsZhHant) SVG 다운로드 및 캐시"""
+    """AnimCJK 한국 한자(svgsKo), 번체(svgsZhHant), 일본/간체(svgsJa, svgsZhHans) 또는 KanjiVG SVG 다운로드 및 캐시"""
     os.makedirs(ANIMCJK_CACHE_DIR, exist_ok=True)
     codepoint = ord(char)
+    hex_code = f"{codepoint:05x}"
     cache_path = os.path.join(ANIMCJK_CACHE_DIR, f"{codepoint}_{char}.svg")
 
     if os.path.exists(cache_path):
@@ -21,7 +22,9 @@ def fetch_animcjk_svg(char: str) -> str:
     urls = [
         f"https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsKo/{codepoint}.svg",
         f"https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsZhHant/{codepoint}.svg",
-        f"https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsJa/{codepoint}.svg"
+        f"https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsJa/{codepoint}.svg",
+        f"https://raw.githubusercontent.com/parsimonhi/animCJK/master/svgsZhHans/{codepoint}.svg",
+        f"https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/{hex_code}.svg"
     ]
 
     for url in urls:
@@ -31,16 +34,16 @@ def fetch_animcjk_svg(char: str) -> str:
                 content = response.read().decode("utf-8")
                 with open(cache_path, "w", encoding="utf-8") as f:
                     f.write(content)
-                print(f"[AnimCJK] Downloaded {char} ({codepoint}) from {url}")
+                print(f"[AnimCJK/KanjiVG] Downloaded {char} ({codepoint}) from {url}")
                 return content
         except Exception as e:
             continue
 
-    raise ValueError(f"AnimCJK에서 '{char}' (유니코드 {codepoint}) 데이터를 찾을 수 없습니다.")
+    raise ValueError(f"AnimCJK/KanjiVG에서 '{char}' (유니코드 {codepoint}) 데이터를 찾을 수 없습니다.")
 
 def parse_animcjk_strokes(char: str):
     """
-    AnimCJK SVG에서:
+    AnimCJK 또는 KanjiVG SVG에서:
     1. 각 획의 해서체 윤곽선 (Outline)
     2. 각 획의 붓 진행 중심선 (Medial Path)
     3. 1024x1024 전역 좌표계 보존
@@ -58,8 +61,29 @@ def parse_animcjk_strokes(char: str):
     if not medial_matches:
         medial_matches = re.findall(r'clip-path="[^"]*c(\d+)"\s+d="([^"]+)"', svg_content)
 
-    outlines = {int(m[0]): m[1] for m in outline_matches}
-    medials = {int(m[0]): m[1] for m in medial_matches}
+    # 3. 만약 KanjiVG 형식(109x109 획 데이터)인 경우 변환
+    if not outline_matches:
+        kvg_paths = re.findall(r'<path[^>]+d="([^"]+)"', svg_content)
+        scale = 1024.0 / 109.0
+        def scale_path(path_str):
+            tokens = re.findall(r'([a-zA-Z])([^a-zA-Z]*)', path_str)
+            scaled = []
+            for cmd, args in tokens:
+                num_list = [float(x) * scale for x in re.findall(r'[-+]?(?:\d*\.\d+|\d+)', args)]
+                args_str = " ".join([f"{x:.2f}" for x in num_list])
+                scaled.append(f"{cmd} {args_str}")
+            return " ".join(scaled)
+
+        outlines = {}
+        medials = {}
+        for idx, p in enumerate(kvg_paths, 1):
+            scaled_p = scale_path(p)
+            medials[idx] = scaled_p
+            outlines[idx] = scaled_p
+    else:
+        outlines = {int(m[0]): m[1] for m in outline_matches}
+        medials = {int(m[0]): m[1] for m in medial_matches}
+
     total_strokes = len(outlines)
 
     char_svg_dir = os.path.join(SVG_HANZI_DIR, f"char_{char}")

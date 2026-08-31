@@ -45,9 +45,8 @@ class HanziShortScene(Scene):
         from hanzi_data import HANZI_DATABASE
         from animcjk_loader import parse_animcjk_strokes
         
-        # 환경변수 HANZI_CHAR 또는 current_scene_meta.json에서 타깃 한자 확인
-        env_char = os.environ.get("HANZI_CHAR", "").strip()
-        char_key = env_char if env_char else "大"
+        # current_scene_meta.json 또는 환경변수에서 타깃 한자 확인
+        char_key = "大"
         self.huneum_dur = 3.2
         self.word_dur = 4.5
         
@@ -57,12 +56,15 @@ class HanziShortScene(Scene):
             try:
                 with open(meta_file, "r", encoding="utf-8") as f:
                     meta = json.load(f)
-                    if not env_char:
-                        char_key = meta.get("char", "大")
+                    char_key = meta.get("char", "大")
                     self.huneum_dur = float(meta.get("huneum_duration", 3.2))
                     self.word_dur = float(meta.get("word_duration", 4.5))
             except Exception:
                 pass
+        else:
+            env_char = os.environ.get("HANZI_CHAR", "").strip()
+            if env_char:
+                char_key = env_char
 
         self.char_data = HANZI_DATABASE.get(char_key, HANZI_DATABASE["大"])
         self.animcjk_info = parse_animcjk_strokes(char_key)

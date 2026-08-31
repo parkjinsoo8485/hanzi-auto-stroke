@@ -47,7 +47,7 @@ def generate_stroke_reveal_frames(char: str, order: int, outline_svg_path: str, 
     붓끝과 1:1 서브픽셀 일치하는 총 num_frames + 1 개의 RGBA 프레임 시퀀스를 생성합니다.
     """
     codepoint = ord(char)
-    cache_dir = f"assets/reveal_cache/{codepoint}_v3"
+    cache_dir = f"assets/reveal_cache/{codepoint}_v4"
     os.makedirs(cache_dir, exist_ok=True)
 
     # 이미 61개 프레임이 완전하게 캐시되어 있다면 즉시 반환
@@ -55,37 +55,33 @@ def generate_stroke_reveal_frames(char: str, order: int, outline_svg_path: str, 
     if all(os.path.exists(p) for p in cached_files):
         return cached_files
 
-    # 1. 외곽선 SVG 파싱 및 다각형 마스크(1024x1024) 생성
+    # 1. 외곽선 SVG 파싱 및 다각형 마스크(1024x1024) 생성 (더미 바운딩박스 선 제외: length > 50)
     doc_outline = svgelements.SVG.parse(outline_svg_path)
-    outline_elems = [e for e in doc_outline.elements() if isinstance(e, svgelements.Path) and e.fill is not None and e.fill.value != 0]
+    outline_elems = [e for e in doc_outline.elements() if isinstance(e, svgelements.Path) and e.fill is not None and e.fill.value != 0 and e.length() > 50]
     if not outline_elems:
-        return []
-    outline_elem = outline_elems[-1]
-
-    poly_pts = []
-    for seg in outline_elem:
-        for t in np.linspace(0, 1, 30):
-            try:
-                pt = seg.point(t)
-                poly_pts.append([int(round(pt.x)), int(round(pt.y))])
-            except Exception:
-                pass
+        outline_elems = [e for e in doc_outline.elements() if isinstance(e, svgelements.Path) and e.length() > 50]
 
     outline_mask = np.zeros((1024, 1024), dtype=np.uint8)
-    if poly_pts:
-        cv2.fillPoly(outline_mask, [np.array(poly_pts, dtype=np.int32)], 255)
+    for elem in outline_elems:
+        pts = []
+        num_outline_pts = max(100, int(elem.length() * 2))
+        for i in range(num_outline_pts + 1):
+            p = elem.point(i / float(num_outline_pts))
+            pts.append([p.x, p.y])
+        if len(pts) > 2:
+            pts_np = np.array(pts, dtype=np.int32)
+            cv2.fillPoly(outline_mask, [pts_np], 255)
 
-    # 2. 붓 진행 중심선(Medial) 고밀도 샘플링 (500개 샘플)
+    # 2. 중심선(Medial) 고밀도 샘플링 (1000개 포인트)
     m_pts = []
     if medial_svg_path and os.path.exists(medial_svg_path):
         doc_medial = svgelements.SVG.parse(medial_svg_path)
         medial_elems = [e for e in doc_medial.elements() if isinstance(e, svgelements.Path) and e.stroke is not None and e.length() > 10]
         if medial_elems:
             medial_elem = medial_elems[-1]
-            num_samples = 500
-            for i in range(num_samples + 1):
-                pt = medial_elem.point(i / float(num_samples))
-                m_pts.append(np.array([pt.x, pt.y], dtype=np.float32))
+            for i in range(1001):
+                pt = medial_elem.point(i / 1000.0)
+                m_pts.append(np.array([float(pt.x), float(pt.y)], dtype=np.float32))
 
     # 3. 딥 코발트 블루 먹물 컬러 (RGB: #1D4ED8 -> BGR: (216, 78, 29))
     ink_bgr = (216, 78, 29)
@@ -109,9 +105,9 @@ def generate_stroke_reveal_frames(char: str, order: int, outline_svg_path: str, 
         return [frame_00_path] + [full_path] * num_frames
 
     brush_radius = 120.0  # 획 두께를 모두 포함하는 충분한 반경
-    cap_radius = 24.0     # 붓끝 자연스러운 둥근 먹물 돔 반경
+    cap_radius = 28.0     # 붓끝 자연스러운 둥근 먹물 돔 반경
 
-    # Frame 01 ~ Frame num_frames (점진적 먹물 채움 & 유기적 돔 캡 적용)
+    # Frame 01 ~ Frame num_frames (점진적 먹물 채움 & 누적 궤적 보존)
     for f in range(1, num_frames + 1):
         if f == num_frames:
             # 100% 완성 프레임: 외곽선 전체 노출
@@ -123,10 +119,10 @@ def generate_stroke_reveal_frames(char: str, order: int, outline_svg_path: str, 
 
             sweep_mask = np.zeros((1024, 1024), dtype=np.uint8)
 
-            # 획 시작점 캡 (시작 부위 세리프/모서리 완전 포함)
+            # 획 시작점 캡
             cv2.circle(sweep_mask, (int(round(m_pts[0][0])), int(round(m_pts[0][1]))), int(brush_radius), 255, -1)
 
-            # 붓이 지나간 경로 복도(Corridor) 생성
+            # 붓이 지나온 경로(0 ~ idx_max) 안전 복도 생성 (꺾인 획에서도 과거 궤적 절대 훼손 없음)
             for k in range(1, idx_max + 1):
                 p0 = m_pts[k - 1]
                 p1 = m_pts[k]
@@ -145,29 +141,8 @@ def generate_stroke_reveal_frames(char: str, order: int, outline_svg_path: str, 
                 cv2.fillPoly(sweep_mask, [quad], 255)
                 cv2.circle(sweep_mask, (int(round(p0[0])), int(round(p0[1]))), int(brush_radius), 255, -1)
 
-            # 현재 붓끝 위치에서의 진행 방향 접선 벡터 (Tangent)
-            if idx_max > 0:
-                dp_c = m_pts[idx_max] - m_pts[idx_max - 1]
-            else:
-                dp_c = m_pts[1] - m_pts[0]
-            dist_c = np.linalg.norm(dp_c)
-            tangent_c = dp_c / dist_c if dist_c > 1e-4 else np.array([1.0, 0.0], dtype=np.float32)
-            normal_c = np.array([-tangent_c[1], tangent_c[0]], dtype=np.float32)
-
-            # 📌 [핵심 절단면]: p_curr 위치 이후의 전방 복도를 마스킹 절단
-            cut_plane = p_curr
-            cut_poly = np.array([
-                cut_plane + normal_c * 2500,
-                cut_plane - normal_c * 2500,
-                cut_plane - normal_c * 2500 + tangent_c * 2500,
-                cut_plane + normal_c * 2500 + tangent_c * 2500
-            ], dtype=np.int32)
-            cv2.fillPoly(sweep_mask, [cut_poly], 0)
-
             # 📌 [붓끝 자연스러운 둥근 돔 캡]: 붓끝 접촉점에 유기적 둥근 먹물 돔 형성
             cv2.circle(sweep_mask, (int(round(p_curr[0])), int(round(p_curr[1]))), int(cap_radius), 255, -1)
-            prev_idx = max(0, idx_max - 2)
-            cv2.line(sweep_mask, (int(round(m_pts[prev_idx][0])), int(round(m_pts[prev_idx][1]))), (int(round(p_curr[0])), int(round(p_curr[1]))), 255, int(cap_radius * 2))
 
             # 해서체 외곽선 마스크 ∩ 붓이 지나간 영역
             revealed_mask = cv2.bitwise_and(outline_mask, sweep_mask)
