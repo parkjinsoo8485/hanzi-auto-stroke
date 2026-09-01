@@ -20,6 +20,7 @@ if sys.platform == "win32":
         pass
 
 def get_ffmpeg_exe():
+    # 1. imageio_ffmpeg 라이브러리 직접 호출
     try:
         import imageio_ffmpeg
         fpath = imageio_ffmpeg.get_ffmpeg_exe()
@@ -27,15 +28,29 @@ def get_ffmpeg_exe():
             return fpath
     except Exception:
         pass
+
+    # 2. 로컬 가상환경(.venv) 내부 바이너리 직접 탐색
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    venv_binaries_dir = os.path.join(project_root, ".venv", "Lib", "site-packages", "imageio_ffmpeg", "binaries")
+    if os.path.exists(venv_binaries_dir):
+        for fname in os.listdir(venv_binaries_dir):
+            if fname.startswith("ffmpeg") and fname.endswith(".exe"):
+                full_p = os.path.join(venv_binaries_dir, fname)
+                if os.path.exists(full_p):
+                    return full_p
+
+    # 3. 시스템 환경 변수 및 표준 설치 경로 탐색
     exe = shutil.which("ffmpeg")
     if exe and os.path.exists(exe):
         return exe
+        
     try:
         from manim import config
         if config.ffmpeg_executable and os.path.exists(config.ffmpeg_executable):
             return config.ffmpeg_executable
     except Exception:
         pass
+
     for path in [
         r"C:\ffmpeg\bin\ffmpeg.exe",
         r"C:\Program Files\ffmpeg\bin\ffmpeg.exe",
@@ -44,6 +59,7 @@ def get_ffmpeg_exe():
     ]:
         if os.path.exists(path):
             return path
+            
     return "ffmpeg"
 
 # 한국어 성우 (밝고 또렷한 톤)
